@@ -52,16 +52,29 @@
                         <span class="badge bg-danger ms-1" style="font-size:.68rem">{{ $navOpenAlertCount }}</span>
                     @endif
                 </a>
-                <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
-                    <i class="bi bi-gear me-1 opacity-75"></i>Settings
-                </a>
+                @if(auth()->user()->isAdmin())
+                    <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
+                        <i class="bi bi-gear me-1 opacity-75"></i>Settings
+                    </a>
+                    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                        <i class="bi bi-people me-1 opacity-75"></i>Users
+                    </a>
+                @endif
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="btn btn-outline-light btn-sm" type="submit">
-                    <i class="bi bi-box-arrow-right me-1"></i>Sign out
-                </button>
-            </form>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-white-50 small d-none d-md-block">
+                    <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name }}
+                    <span class="badge ms-1" style="font-size:.65rem;background:{{ auth()->user()->isAdmin() ? '#6366f1' : '#6b7280' }}">
+                        {{ ucfirst(auth()->user()->role) }}
+                    </span>
+                </div>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="btn btn-outline-light btn-sm" type="submit">
+                        <i class="bi bi-box-arrow-right me-1"></i>Sign out
+                    </button>
+                </form>
+            </div>
         @endauth
     </div>
 </nav>

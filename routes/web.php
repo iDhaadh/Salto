@@ -4,6 +4,7 @@ use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,13 +26,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::post('/alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
     Route::post('/alerts/{alert}/resend',  [AlertController::class, 'resend'])->name('alerts.resend');
-    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
-    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
-    Route::put('/settings/email', [SettingsController::class, 'updateEmail'])->name('settings.email.update');
-    Route::post('/settings/email/test', [SettingsController::class, 'testEmail'])->name('settings.email.test');
-    Route::put('/settings/whatsapp', [SettingsController::class, 'updateWhatsApp'])->name('settings.whatsapp.update');
-    Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
-    Route::put('/settings/connection', [SettingsController::class, 'updateConnection'])->name('settings.connection.update');
-    Route::post('/settings/connection/test', [SettingsController::class, 'testConnection'])->name('settings.connection.test');
-    Route::post('/settings/test', [SettingsController::class, 'test'])->name('settings.test');
+
+    // Admin-only routes
+    Route::middleware('admin')->group(function () {
+        Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::put('/settings/email', [SettingsController::class, 'updateEmail'])->name('settings.email.update');
+        Route::post('/settings/email/test', [SettingsController::class, 'testEmail'])->name('settings.email.test');
+        Route::put('/settings/whatsapp', [SettingsController::class, 'updateWhatsApp'])->name('settings.whatsapp.update');
+        Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
+        Route::put('/settings/connection', [SettingsController::class, 'updateConnection'])->name('settings.connection.update');
+        Route::post('/settings/connection/test', [SettingsController::class, 'testConnection'])->name('settings.connection.test');
+        Route::post('/settings/test', [SettingsController::class, 'test'])->name('settings.test');
+
+        Route::resource('users', UserController::class)->except(['show']);
+    });
 });
