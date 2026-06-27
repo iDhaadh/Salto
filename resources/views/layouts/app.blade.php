@@ -12,6 +12,7 @@
         .navbar-brand { font-weight: 700; }
         .card { border: none; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
         .stat-card .display-6 { font-weight: 700; }
+        .pagination svg { width: 14px; height: 14px; }
     </style>
 </head>
 <body>
