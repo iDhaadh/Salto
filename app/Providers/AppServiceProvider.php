@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -15,6 +16,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrapFive();
+
+        View::composer('layouts.app', function ($view) {
+            try {
+                $view->with('navOpenAlertCount', \App\Models\Alert::where('status', 'open')->count());
+            } catch (\Throwable) {
+                $view->with('navOpenAlertCount', 0);
+            }
+        });
 
         try {
             $this->applySaltoSettings();
