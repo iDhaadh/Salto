@@ -84,7 +84,7 @@
                             </td>
                             <td class="small text-muted">{{ $alert->resolved_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td class="text-end pe-3 text-nowrap">
-                                @if ($isOpen)
+                                @if ($isOpen && auth()->user()->isAdmin())
                                     <form method="POST" action="{{ route('alerts.resend', $alert) }}" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-primary" title="Resend notification">
