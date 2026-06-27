@@ -19,6 +19,7 @@
             <thead>
                 <tr>
                     <th class="ps-3">Name</th>
+                    <th>Username</th>
                     <th>Email</th>
                     <th>Role</th>
                     <th>Created</th>
@@ -43,6 +44,7 @@
                                 </div>
                             </div>
                         </td>
+                        <td class="fw-mono text-muted">{{ $user->username }}</td>
                         <td class="text-muted">{{ $user->email }}</td>
                         <td>
                             @if($user->isAdmin())

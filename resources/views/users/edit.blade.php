@@ -25,6 +25,14 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <input type="text" name="username" value="{{ old('username', $user->username) }}"
+                               class="form-control @error('username') is-invalid @enderror">
+                        <div class="form-text">Letters, numbers, dashes and underscores only.</div>
+                        @error('username')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Email address</label>
                         <input type="email" name="email" value="{{ old('email', $user->email) }}"
                                class="form-control @error('email') is-invalid @enderror">
