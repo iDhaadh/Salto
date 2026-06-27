@@ -45,7 +45,7 @@
                             </div>
                         </td>
                         <td class="fw-mono text-muted">{{ $user->username }}</td>
-                        <td class="text-muted">{{ $user->email }}</td>
+                        <td class="text-muted">{{ $user->email ?? '—' }}</td>
                         <td>
                             @if($user->isAdmin())
                                 <span class="badge" style="background:#ede9fe;color:#6d28d9">
