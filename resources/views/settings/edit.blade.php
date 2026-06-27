@@ -379,6 +379,15 @@
                                        placeholder="battery_flat_alert">
                                 @error('wa_template_flat')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Template — Normal / Recovered</label>
+                                <input type="text" name="wa_template_normal"
+                                       class="form-control @error('wa_template_normal') is-invalid @enderror"
+                                       value="{{ old('wa_template_normal', $waTemplateNormal ?? '') }}"
+                                       placeholder="battery_normal_alert">
+                                <div class="form-text">Sent when a battery recovers to Normal. Uses {{1}} lock name, {{2}} timestamp.</div>
+                                @error('wa_template_normal')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
                             <div class="col-sm-4">
                                 <label class="form-label">Template locale</label>
                                 <input type="text" name="wa_template_locale"

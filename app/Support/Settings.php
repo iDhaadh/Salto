@@ -81,9 +81,10 @@ class Settings
     // ── WhatsApp Cloud API ───────────────────────────────────────────────────
     public static function waPhoneId(): string     { return (string) self::get('wa_phone_id',       env('WHATSAPP_PHONE_ID',       '')); }
     public static function waApiVersion(): string  { return (string) self::get('wa_api_version',    env('WHATSAPP_API_VERSION',    'v21.0')); }
-    public static function waTemplateLow(): string { return (string) self::get('wa_template_low',   env('WHATSAPP_TEMPLATE_LOW',   'battery_low_alert')); }
-    public static function waTemplateFlat(): string{ return (string) self::get('wa_template_flat',  env('WHATSAPP_TEMPLATE_FLAT',  'battery_flat_alert')); }
-    public static function waTemplateLocale(): string{ return (string) self::get('wa_template_locale', env('WHATSAPP_TEMPLATE_LOCALE', 'en')); }
+    public static function waTemplateLow(): string    { return (string) self::get('wa_template_low',    env('WHATSAPP_TEMPLATE_LOW',    'battery_low_alert')); }
+    public static function waTemplateFlat(): string   { return (string) self::get('wa_template_flat',   env('WHATSAPP_TEMPLATE_FLAT',   'battery_flat_alert')); }
+    public static function waTemplateNormal(): string { return (string) self::get('wa_template_normal', env('WHATSAPP_TEMPLATE_NORMAL', 'battery_normal_alert')); }
+    public static function waTemplateLocale(): string { return (string) self::get('wa_template_locale', env('WHATSAPP_TEMPLATE_LOCALE', 'en')); }
     public static function waTokenSet(): bool        { return self::get('wa_token') !== null || (env('WHATSAPP_TOKEN') !== null && env('WHATSAPP_TOKEN') !== ''); }
     public static function waVerifyToken(): string   { return (string) self::get('wa_verify_token', env('WHATSAPP_VERIFY_TOKEN', '')); }
     public static function waAppSecretSet(): bool    { return self::get('wa_app_secret') !== null; }

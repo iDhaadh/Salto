@@ -42,6 +42,7 @@ class SettingsController extends Controller
             'waApiVersion'     => Settings::waApiVersion(),
             'waTemplateLow'    => Settings::waTemplateLow(),
             'waTemplateFlat'   => Settings::waTemplateFlat(),
+            'waTemplateNormal' => Settings::waTemplateNormal(),
             'waTemplateLocale' => Settings::waTemplateLocale(),
             'waTokenSet'       => Settings::waTokenSet(),
             'waVerifyToken'    => Settings::waVerifyToken(),
@@ -166,6 +167,7 @@ class SettingsController extends Controller
             'wa_webhook_url'     => ['nullable', 'string', 'max:512'],
             'wa_template_low'    => ['required', 'string', 'max:128'],
             'wa_template_flat'   => ['required', 'string', 'max:128'],
+            'wa_template_normal' => ['nullable', 'string', 'max:128'],
             'wa_template_locale' => ['required', 'string', 'max:16'],
         ]);
 
@@ -173,6 +175,7 @@ class SettingsController extends Controller
         Settings::put('wa_api_version',     $data['wa_api_version']);
         Settings::put('wa_template_low',    $data['wa_template_low']);
         Settings::put('wa_template_flat',   $data['wa_template_flat']);
+        Settings::put('wa_template_normal', $data['wa_template_normal'] ?? '');
         Settings::put('wa_template_locale', $data['wa_template_locale']);
         Settings::put('wa_verify_token',    $data['wa_verify_token'] ?? '');
         Settings::put('wa_webhook_url',     $data['wa_webhook_url'] ?? '');
@@ -209,6 +212,7 @@ class SettingsController extends Controller
             'services.whatsapp.api_version'     => Settings::waApiVersion(),
             'services.whatsapp.template_low'    => Settings::waTemplateLow(),
             'services.whatsapp.template_flat'   => Settings::waTemplateFlat(),
+            'services.whatsapp.template_normal' => Settings::waTemplateNormal(),
             'services.whatsapp.template_locale' => Settings::waTemplateLocale(),
         ]);
 

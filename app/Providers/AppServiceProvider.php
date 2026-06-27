@@ -64,6 +64,7 @@ class AppServiceProvider extends ServiceProvider
             'services.whatsapp.api_version'     => \App\Support\Settings::waApiVersion(),
             'services.whatsapp.template_low'    => \App\Support\Settings::waTemplateLow(),
             'services.whatsapp.template_flat'   => \App\Support\Settings::waTemplateFlat(),
+            'services.whatsapp.template_normal' => \App\Support\Settings::waTemplateNormal(),
             'services.whatsapp.template_locale' => \App\Support\Settings::waTemplateLocale(),
         ]);
     }
