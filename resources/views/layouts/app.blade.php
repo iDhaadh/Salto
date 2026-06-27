@@ -33,6 +33,7 @@
         .battery-bar { height: 5px; border-radius: 3px; background: #e5e7eb; overflow: hidden; min-width: 60px; }
         .battery-bar-fill { height: 100%; border-radius: 3px; }
         .nav-link { font-size: .9rem; font-weight: 500; }
+        @media (min-width: 992px) { .border-lg-0 { border-top: none !important; margin-top: 0 !important; padding-top: 0 !important; } }
     </style>
 </head>
 <body>
@@ -41,28 +42,56 @@
         <a class="navbar-brand" href="{{ route('dashboard') }}">
             <i class="bi bi-battery-half me-1"></i>SALTO Battery Monitor
         </a>
+
         @auth
-            <div class="navbar-nav me-auto ms-3">
-                <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                    <i class="bi bi-lock me-1 opacity-75"></i>Locks
+        {{-- Alert badge visible on mobile next to hamburger --}}
+        <div class="d-flex align-items-center gap-2 ms-auto me-2 d-lg-none">
+            @if(($navOpenAlertCount ?? 0) > 0)
+                <a href="{{ route('alerts.index') }}" class="text-decoration-none">
+                    <span class="badge bg-danger" style="font-size:.75rem">
+                        <i class="bi bi-bell-fill me-1"></i>{{ $navOpenAlertCount }}
+                    </span>
                 </a>
-                <a class="nav-link {{ request()->routeIs('alerts.*') ? 'active' : '' }}" href="{{ route('alerts.index') }}">
-                    <i class="bi bi-bell me-1 opacity-75"></i>Alerts
-                    @if(($navOpenAlertCount ?? 0) > 0)
-                        <span class="badge bg-danger ms-1" style="font-size:.68rem">{{ $navOpenAlertCount }}</span>
-                    @endif
-                </a>
+            @endif
+        </div>
+
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav me-auto ms-lg-3 mt-2 mt-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                        <i class="bi bi-lock me-1 opacity-75"></i>Locks
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('alerts.*') ? 'active' : '' }}" href="{{ route('alerts.index') }}">
+                        <i class="bi bi-bell me-1 opacity-75"></i>Alerts
+                        @if(($navOpenAlertCount ?? 0) > 0)
+                            <span class="badge bg-danger ms-1" style="font-size:.68rem">{{ $navOpenAlertCount }}</span>
+                        @endif
+                    </a>
+                </li>
                 @if(auth()->user()->isAdmin())
-                    <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
-                        <i class="bi bi-gear me-1 opacity-75"></i>Settings
-                    </a>
-                    <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                        <i class="bi bi-people me-1 opacity-75"></i>Users
-                    </a>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
+                            <i class="bi bi-gear me-1 opacity-75"></i>Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                            <i class="bi bi-people me-1 opacity-75"></i>Users
+                        </a>
+                    </li>
                 @endif
-            </div>
-            <div class="d-flex align-items-center gap-3">
-                <div class="text-white-50 small d-none d-md-block">
+            </ul>
+
+            <div class="d-flex align-items-center gap-3 pb-2 pb-lg-0 border-top border-secondary mt-2 mt-lg-0 pt-2 pt-lg-0 border-lg-0">
+                <div class="text-white-50 small">
                     <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name }}
                     <span class="badge ms-1" style="font-size:.65rem;background:{{ auth()->user()->isAdmin() ? '#6366f1' : '#6b7280' }}">
                         {{ ucfirst(auth()->user()->role) }}
@@ -75,6 +104,7 @@
                     </button>
                 </form>
             </div>
+        </div>
         @endauth
     </div>
 </nav>
