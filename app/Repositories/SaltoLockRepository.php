@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\DB;
 class SaltoLockRepository
 {
     /**
+     * Fetch the current reading for one lock by its SALTO ID.
+     * Returns null if the lock is not found or SALTO is unreachable.
+     */
+    public function findBySaltoId(string $saltoId): ?LockReading
+    {
+        return $this->all()->first(fn (LockReading $r) => $r->saltoId === $saltoId);
+    }
+
+    /**
      * @return Collection<int, LockReading>
      */
     public function all(): Collection

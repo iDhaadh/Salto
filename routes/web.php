@@ -21,6 +21,7 @@ Route::post('/logout', [LoginController::class, 'destroy'])
 
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/sync', [DashboardController::class, 'sync'])->name('dashboard.sync');
     Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::post('/alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
     Route::post('/alerts/{alert}/resend',  [AlertController::class, 'resend'])->name('alerts.resend');

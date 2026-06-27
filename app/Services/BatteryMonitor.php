@@ -52,7 +52,8 @@ class BatteryMonitor
 
             if ($status->isAlertable()) {
                 if (! $openAlert) {
-                    // New problem → open alert and notify immediately.
+                    // No open alert (new problem or was manually resolved but battery still bad).
+                    // Either way: open a fresh alert and notify immediately.
                     $alert = $this->openAlert($lock, $status);
                     $stats['opened']++;
                     $stats['jobs'] += $this->dispatchAndStamp($lock, $status, 'alert', $alert);

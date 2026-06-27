@@ -5,10 +5,21 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Lock battery status</h1>
-    <span class="text-muted small">
-        Last sync:
-        {{ $lastSync ? \Illuminate\Support\Carbon::parse($lastSync)->diffForHumans() : 'never — run salto:check' }}
-    </span>
+    <div class="d-flex align-items-center gap-3">
+        @if (session('status'))
+            <span class="text-success small"><i class="bi bi-check-circle me-1"></i>{{ session('status') }}</span>
+        @endif
+        <span class="text-muted small">
+            Last sync:
+            {{ $lastSync ? \Illuminate\Support\Carbon::parse($lastSync)->format('d/m/Y H:i') : 'never' }}
+        </span>
+        <form method="POST" action="{{ route('dashboard.sync') }}">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-1"></i> Sync now
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">
@@ -62,7 +73,7 @@
                             <td>
                                 <span class="badge text-bg-{{ $lock->status()->color() }}">{{ $lock->status()->label() }}</span>
                             </td>
-                            <td>{{ $lock->last_seen_at ? $lock->last_seen_at->format('Y-m-d H:i') : '—' }}</td>
+                            <td>{{ $lock->last_seen_at ? $lock->last_seen_at->format('d/m/Y H:i') : '—' }}</td>
                             <td class="text-muted small">{{ $lock->salto_id }}</td>
                         </tr>
                     @empty

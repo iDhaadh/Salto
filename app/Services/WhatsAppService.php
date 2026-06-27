@@ -42,7 +42,7 @@ class WhatsAppService
         $params = [
             $lock->name,
             $status->label(),
-            now()->format('Y-m-d H:i'),
+            now()->format('d/m/Y H:i'),
         ];
 
         // Include a "Resolved ✓" quick-reply button when we have a real alert ID

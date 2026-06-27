@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Alert;
+use App\Repositories\SaltoLockRepository;
 use App\Services\AlertNotifier;
 use App\Support\BatteryStatus;
 use App\Support\LockSnapshot;
@@ -29,16 +30,42 @@ class AlertController extends Controller
         ]);
     }
 
-    public function resolve(Alert $alert): RedirectResponse
+    public function resolve(Alert $alert, Request $request, SaltoLockRepository $salto, AlertNotifier $notifier): RedirectResponse
     {
-        if ($alert->status === 'open') {
-            $alert->update([
-                'status'      => 'resolved',
-                'resolved_at' => now(),
-            ]);
+        if ($alert->status !== 'open') {
+            return back()->with('status', 'Alert is already resolved.');
         }
 
-        return back()->with('status', "Alert for \"{$alert->lock?->name}\" marked as resolved.");
+        $lock = $alert->lock;
+
+        // Check current live status from SALTO unless admin forces it.
+        if (! $request->boolean('force') && $lock) {
+            try {
+                $reading = $salto->findBySaltoId($lock->salto_id);
+
+                if ($reading && $reading->battery->isAlertable()) {
+                    // Still bad in SALTO — reopen/keep open and re-notify.
+                    $alert->update(['last_notified_at' => now()]);
+                    $snapshot = LockSnapshot::fromLock($lock);
+                    $notifier->notify($snapshot, $reading->battery, 'reminder', $alert);
+
+                    return back()->with('error',
+                        "Cannot resolve — SALTO still reports \"{$lock->name}\" battery as "
+                        . strtoupper($reading->battery->label())
+                        . '. Notification resent. Replace the battery first, or use Force Resolve.'
+                    );
+                }
+            } catch (\Throwable) {
+                // SALTO unreachable — allow the resolve to proceed.
+            }
+        }
+
+        $alert->update([
+            'status'      => 'resolved',
+            'resolved_at' => now(),
+        ]);
+
+        return back()->with('status', "Alert for \"{$lock?->name}\" marked as resolved.");
     }
 
     public function resend(Alert $alert, AlertNotifier $notifier): RedirectResponse

@@ -65,13 +65,13 @@
                                     {{ ucfirst($alert->status) }}
                                 </span>
                             </td>
-                            <td>{{ $alert->opened_at?->format('Y-m-d H:i') }}</td>
-                            <td>{{ $alert->last_notified_at?->format('Y-m-d H:i') ?? '—' }}</td>
+                            <td>{{ $alert->opened_at?->format('d/m/Y H:i') }}</td>
+                            <td>{{ $alert->last_notified_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td>
                                 <span class="text-success">{{ $sent }} sent</span>
                                 @if ($failed)<span class="text-danger ms-1">/ {{ $failed }} failed</span>@endif
                             </td>
-                            <td>{{ $alert->resolved_at?->format('Y-m-d H:i') ?? '—' }}</td>
+                            <td>{{ $alert->resolved_at?->format('d/m/Y H:i') ?? '—' }}</td>
                             <td class="text-end text-nowrap">
                                 @if ($isOpen)
                                     <form method="POST" action="{{ route('alerts.resend', $alert) }}" class="d-inline">
@@ -84,9 +84,17 @@
                                     <form method="POST" action="{{ route('alerts.resolve', $alert) }}" class="d-inline ms-1">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-outline-success"
-                                                onclick="return confirm('Mark this alert as resolved?')"
-                                                title="Mark as resolved">
+                                                title="Resolve — checks SALTO battery status first">
                                             <i class="bi bi-check-lg"></i> Resolve
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ route('alerts.resolve', $alert) }}" class="d-inline ms-1">
+                                        @csrf
+                                        <input type="hidden" name="force" value="1">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                onclick="return confirm('Force resolve even if SALTO still reports a bad battery?')"
+                                                title="Force resolve regardless of SALTO status">
+                                            <i class="bi bi-check2-all"></i> Force
                                         </button>
                                     </form>
                                 @endif

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Lock;
 use App\Support\BatteryStatus;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -39,5 +41,13 @@ class DashboardController extends Controller
             'lastSync' => $lastSync,
             'statuses' => BatteryStatus::cases(),
         ]);
+    }
+
+    public function sync(): RedirectResponse
+    {
+        Artisan::call('salto:check');
+
+        return redirect()->route('dashboard')
+            ->with('status', 'Sync complete — battery status updated from SALTO.');
     }
 }
