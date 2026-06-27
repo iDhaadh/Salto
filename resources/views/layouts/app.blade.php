@@ -100,5 +100,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
+<footer class="text-center py-3 mt-2" style="font-size:.8rem;color:#9ca3af;">
+    &copy; {{ date('Y') }} Dhaadh. All rights reserved.
+</footer>
 </body>
 </html>

@@ -35,20 +35,23 @@ class WhatsAppService
      */
     public function sendBatteryAlert(string $to, LockSnapshot $lock, BatteryStatus $status, string $reason = 'alert', ?int $alertId = null): array
     {
-        $template = $status->isUrgent()
-            ? config('services.whatsapp.template_flat')
-            : config('services.whatsapp.template_low');
+        $isRecovery = $status === BatteryStatus::Normal;
 
-        $params = [
-            $lock->name,
-            $status->label(),
-            now()->format('d/m/Y H:i'),
-        ];
+        $template = match (true) {
+            $isRecovery        => config('services.whatsapp.template_normal'),
+            $status->isUrgent() => config('services.whatsapp.template_flat'),
+            default             => config('services.whatsapp.template_low'),
+        };
 
-        // Include a "Resolved ✓" quick-reply button when we have a real alert ID
-        // (not for test sends). The button payload carries the alert ID so the
-        // webhook can resolve the correct alert when the user taps it.
-        $resolveButton = ($alertId !== null && $reason !== 'test')
+        // Recovery template: {{1}} lock name, {{2}} timestamp (no status label needed)
+        // Alert templates:   {{1}} lock name, {{2}} status label, {{3}} timestamp
+        $params = $isRecovery
+            ? [$lock->name, now()->format('d/m/Y H:i')]
+            : [$lock->name, $status->label(), now()->format('d/m/Y H:i')];
+
+        // Only include the "Resolved ✓" quick-reply button on alert messages,
+        // not on recovery notifications (the alert is already being resolved).
+        $resolveButton = (! $isRecovery && $alertId !== null && $reason !== 'test')
             ? [['type' => 'button', 'sub_type' => 'quick_reply', 'index' => '0',
                 'parameters' => [['type' => 'payload', 'payload' => "RESOLVE_{$alertId}"]]]]
             : [];

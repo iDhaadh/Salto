@@ -46,6 +46,7 @@ return [
         'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
         'template_low' => env('WHATSAPP_TEMPLATE_LOW', 'battery_low_alert'),
         'template_flat' => env('WHATSAPP_TEMPLATE_FLAT', 'battery_flat_alert'),
+        'template_normal' => env('WHATSAPP_TEMPLATE_NORMAL', 'battery_normal_alert'),
         'template_locale' => env('WHATSAPP_TEMPLATE_LOCALE', 'en'),
     ],
 
