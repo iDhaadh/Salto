@@ -3,6 +3,7 @@
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DoorEventController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
@@ -31,6 +32,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
     Route::get('/logs/export/pdf',   [LogController::class, 'exportPdf'])->name('logs.export.pdf');
     Route::get('/logs/export/excel', [LogController::class, 'exportExcel'])->name('logs.export.excel');
+
+    Route::get('/door-events', [DoorEventController::class, 'index'])->name('door-events.index');
+    Route::get('/door-events/export/pdf',   [DoorEventController::class, 'exportPdf'])->name('door-events.export.pdf');
+    Route::get('/door-events/export/excel', [DoorEventController::class, 'exportExcel'])->name('door-events.export.excel');
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {

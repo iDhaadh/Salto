@@ -77,8 +77,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('door-events.*') ? 'active' : '' }}" href="{{ route('door-events.index') }}">
+                        <i class="bi bi-door-open me-1 opacity-75"></i>Door Events
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('logs.*') ? 'active' : '' }}" href="{{ route('logs.index') }}">
-                        <i class="bi bi-journal-text me-1 opacity-75"></i>Logs
+                        <i class="bi bi-journal-text me-1 opacity-75"></i>Notif. Logs
                     </a>
                 </li>
                 @if(auth()->user()->isAdmin())
