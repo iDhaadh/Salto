@@ -58,18 +58,25 @@ class SaltoLockRepository
             return DB::connection($connection)->select($raw);
         }
 
-        $cols = config('salto.query.columns');
-        $table = config('salto.query.table');
+        // Build a query from the configured column names.
+        // Battery is converted via CASE (numeric → string) so BatteryStatus::fromRaw() maps correctly.
+        // last_seen uses the audit trail (most recent event) rather than LastUpdate, which only
+        // changes when battery status changes — not on card swipes.
+        $cols  = config('salto.query.columns');
+        $table = $this->quote(config('salto.query.table', 'tb_Locks'));
+        $id    = $this->quote($cols['id']       ?? 'id_lock');
+        $name  = $this->quote($cols['name']     ?? 'Description');
+        $loc   = $this->quote($cols['location'] ?? 'Description');
+        $bat   = $this->quote($cols['battery']  ?? 'Battery');
 
-        $select = [];
-        foreach (['id', 'name', 'location', 'battery', 'last_seen'] as $alias) {
-            $column = $cols[$alias] ?? null;
-            if ($column) {
-                $select[] = $this->quote($column).' AS '.$this->quote($alias);
-            }
-        }
-
-        $sql = 'SELECT '.implode(', ', $select).' FROM '.$this->quote($table);
+        $sql = "SELECT l.{$id} AS [id], l.{$name} AS [name], l.{$loc} AS [location],
+            CASE WHEN l.{$bat} = 255 THEN 'unknown'
+                 WHEN l.{$bat} >= 40  THEN 'normal'
+                 WHEN l.{$bat} >= 20  THEN 'low'
+                 ELSE 'flat' END AS [battery],
+            (SELECT TOP 1 a.EventDateTime FROM [tb_LockAuditTrail] a
+             WHERE a.id_object = l.{$id} ORDER BY a.InsertionCounter DESC) AS [last_seen]
+            FROM {$table} l WHERE l.status = 1";
 
         return DB::connection($connection)->select($sql);
     }
