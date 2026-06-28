@@ -51,44 +51,39 @@ class DoorEventController extends Controller
         1001 => ['Flat Battery Alert',     'battery'],
     ];
 
-    private function buildQuery(Request $request)
-    {
-        $sql = "
-            SELECT
-                a.InsertionCounter,
-                a.EventDateTime,
-                a.EventCode,
-                a.id_object      AS lock_id,
-                a.id_subject     AS user_id,
-                a.Cardcode,
-                l.name           AS lock_name,
-                l.Description    AS lock_location,
-                u.name           AS user_name,
-                u.FirstName      AS first_name,
-                u.LastName       AS last_name
-            FROM [tb_LockAuditTrail] a
-            LEFT JOIN [tb_Locks] l ON a.id_object  = l.id_lock
-            LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user
-            WHERE 1=1
-        ";
+    private const BASE_SELECT = "
+        SELECT {top}
+            a.InsertionCounter, a.EventDateTime, a.EventCode,
+            a.id_object AS lock_id, a.id_subject AS user_id, a.Cardcode,
+            l.name AS lock_name, l.Description AS lock_location,
+            u.name AS user_name, u.FirstName AS first_name, u.LastName AS last_name
+        FROM [tb_LockAuditTrail] a
+        LEFT JOIN [tb_Locks] l ON a.id_object  = l.id_lock
+        LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user
+        WHERE 1=1
+    ";
 
+    /** Returns [whereClause, bindings] — no SELECT, no ORDER BY. */
+    private function buildWhere(Request $request): array
+    {
+        $where = '';
         $bindings = [];
 
         if ($search = trim((string) $request->input('search'))) {
-            $sql .= " AND (l.name LIKE ? OR l.Description LIKE ?)";
+            $where .= " AND (l.name LIKE ? OR l.Description LIKE ?)";
             $bindings[] = "%{$search}%";
             $bindings[] = "%{$search}%";
         }
 
         if ($user = trim((string) $request->input('user'))) {
-            $sql .= " AND (u.name LIKE ? OR u.FirstName LIKE ? OR u.LastName LIKE ?)";
+            $where .= " AND (u.name LIKE ? OR u.FirstName LIKE ? OR u.LastName LIKE ?)";
             $bindings[] = "%{$user}%";
             $bindings[] = "%{$user}%";
             $bindings[] = "%{$user}%";
         }
 
         if ($eventCode = $request->input('event_code')) {
-            $sql .= " AND a.EventCode = ?";
+            $where .= " AND a.EventCode = ?";
             $bindings[] = (int) $eventCode;
         }
 
@@ -96,39 +91,42 @@ class DoorEventController extends Controller
             $codes = array_keys(array_filter(self::EVENT_CODES, fn ($e) => $e[1] === $category));
             if ($codes) {
                 $placeholders = implode(',', array_fill(0, count($codes), '?'));
-                $sql .= " AND a.EventCode IN ({$placeholders})";
+                $where .= " AND a.EventCode IN ({$placeholders})";
                 $bindings = array_merge($bindings, $codes);
             }
         }
 
         if ($from = $request->input('from')) {
-            $sql .= " AND CAST(a.EventDateTime AS DATE) >= ?";
+            $where .= " AND CAST(a.EventDateTime AS DATE) >= ?";
             $bindings[] = $from;
         }
 
         if ($to = $request->input('to')) {
-            $sql .= " AND CAST(a.EventDateTime AS DATE) <= ?";
+            $where .= " AND CAST(a.EventDateTime AS DATE) <= ?";
             $bindings[] = $to;
         }
 
-        $sql .= " ORDER BY a.InsertionCounter DESC";
+        return [$where, $bindings];
+    }
 
-        return [$sql, $bindings];
+    private function makeSelect(string $where, string $top = ''): string
+    {
+        return str_replace('{top}', $top, self::BASE_SELECT) . $where;
     }
 
     public function index(Request $request)
     {
-        [$sql, $bindings] = $this->buildQuery($request);
+        [$where, $bindings] = $this->buildWhere($request);
 
         $perPage = 50;
         $page    = (int) $request->input('page', 1);
         $offset  = ($page - 1) * $perPage;
 
-        $countSql = "SELECT COUNT(*) AS total FROM ({$sql}) AS sub";
+        $countSql = "SELECT COUNT(*) AS total FROM [tb_LockAuditTrail] a LEFT JOIN [tb_Locks] l ON a.id_object = l.id_lock LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user WHERE 1=1 {$where}";
         $total = DB::connection('salto')->selectOne($countSql, $bindings)->total ?? 0;
 
         $rows = DB::connection('salto')->select(
-            "SELECT * FROM ({$sql}) AS sub ORDER BY InsertionCounter DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
+            $this->makeSelect($where) . " ORDER BY a.InsertionCounter DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY",
             array_merge($bindings, [$offset, $perPage])
         );
 
@@ -142,26 +140,19 @@ class DoorEventController extends Controller
         $eventCodes = self::EVENT_CODES;
         $categories = ['access', 'denied', 'door', 'battery', 'system'];
 
-        // Quick totals
-        [$baseSql, $baseBindings] = $this->buildQuery(new Request());
-        $totalCount   = DB::connection('salto')->selectOne("SELECT COUNT(*) AS c FROM ({$baseSql}) AS s", $baseBindings)->c ?? 0;
-        $todayCount   = DB::connection('salto')->selectOne(
-            "SELECT COUNT(*) AS c FROM ({$baseSql}) AS s WHERE CAST(s.EventDateTime AS DATE) = CAST(GETDATE() AS DATE)",
-            $baseBindings
-        )->c ?? 0;
-        $accessCount  = DB::connection('salto')->selectOne(
-            "SELECT COUNT(*) AS c FROM ({$baseSql}) AS s WHERE s.EventCode = 17",
-            $baseBindings
-        )->c ?? 0;
+        $baseCount = "SELECT COUNT(*) AS c FROM [tb_LockAuditTrail] a LEFT JOIN [tb_Locks] l ON a.id_object = l.id_lock LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user WHERE 1=1";
+        $totalCount  = DB::connection('salto')->selectOne("{$baseCount}")->c ?? 0;
+        $todayCount  = DB::connection('salto')->selectOne("{$baseCount} AND CAST(a.EventDateTime AS DATE) = CAST(GETDATE() AS DATE)")->c ?? 0;
+        $accessCount = DB::connection('salto')->selectOne("{$baseCount} AND a.EventCode = 17")->c ?? 0;
 
         return view('door-events.index', compact('paginator', 'eventCodes', 'categories', 'totalCount', 'todayCount', 'accessCount'));
     }
 
     public function exportPdf(Request $request)
     {
-        [$sql, $bindings] = $this->buildQuery($request);
+        [$where, $bindings] = $this->buildWhere($request);
         $rows = DB::connection('salto')->select(
-            "SELECT TOP 1000 * FROM ({$sql}) AS sub ORDER BY InsertionCounter DESC",
+            $this->makeSelect($where, 'TOP 1000') . " ORDER BY a.InsertionCounter DESC",
             $bindings
         );
         $rows = collect($rows)->map(fn ($r) => $this->decorate($r));
@@ -176,9 +167,9 @@ class DoorEventController extends Controller
 
     public function exportExcel(Request $request)
     {
-        [$sql, $bindings] = $this->buildQuery($request);
+        [$where, $bindings] = $this->buildWhere($request);
         $rows = DB::connection('salto')->select(
-            "SELECT TOP 5000 * FROM ({$sql}) AS sub ORDER BY InsertionCounter DESC",
+            $this->makeSelect($where, 'TOP 5000') . " ORDER BY a.InsertionCounter DESC",
             $bindings
         );
         $rows = collect($rows)->map(fn ($r) => $this->decorate($r));
