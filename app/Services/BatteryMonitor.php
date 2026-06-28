@@ -87,15 +87,15 @@ class BatteryMonitor
                         $stats['jobs'] += $this->dispatchAndStamp($lock, $status, 'reminder', $openAlert);
                     }
                 }
-            } elseif ($openAlert && $status === BatteryStatus::Normal) {
-                // Recovered → resolve and optionally notify.
+            } elseif ($openAlert && ($status === BatteryStatus::Normal || $status === BatteryStatus::Unknown)) {
+                // Normal = confirmed recovered. Unknown = stale data (>30 days), can't verify still bad.
+                // Either way: resolve. Only send a recovery notification when we can confirm Normal.
                 $openAlert->update(['status' => 'resolved', 'resolved_at' => now()]);
                 $stats['resolved']++;
-                if (Settings::notifyOnRecovery()) {
+                if ($status === BatteryStatus::Normal && Settings::notifyOnRecovery()) {
                     $stats['jobs'] += $this->notifier->notify(LockSnapshot::fromLock($lock), $status, 'recovery', $openAlert);
                 }
             }
-            // status === Unknown with an open alert: leave the alert open, do nothing.
         }
 
         return $stats;
