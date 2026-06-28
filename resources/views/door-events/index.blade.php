@@ -197,14 +197,15 @@
                                 <td class="text-muted">{{ $row['lock_location'] }}</td>
                                 <td>
                                     @php
-                                        $badgeClass = match($row['category']) {
+                                        $isOnline = $row['is_online'] ?? false;
+                                        $badgeClass = $isOnline ? 'bg-primary' : match($row['category']) {
                                             'access'  => 'bg-success',
                                             'denied'  => 'bg-danger',
                                             'battery' => 'bg-warning text-dark',
                                             'door'    => 'bg-primary',
                                             default   => 'bg-secondary',
                                         };
-                                        $icon = match($row['category']) {
+                                        $icon = $isOnline ? 'bi-unlock' : match($row['category']) {
                                             'access'  => 'bi-check-circle',
                                             'denied'  => 'bi-x-circle',
                                             'battery' => 'bi-battery-half',

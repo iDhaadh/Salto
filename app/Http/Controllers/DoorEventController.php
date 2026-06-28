@@ -57,10 +57,12 @@ class DoorEventController extends Controller
             a.InsertionCounter, a.EventDateTime, a.EventCode,
             a.id_object AS lock_id, a.id_subject AS user_id, a.Cardcode,
             l.name AS lock_name, l.Description AS lock_location,
-            u.name AS user_name, u.FirstName AS first_name, u.LastName AS last_name
+            u.name AS user_name, u.FirstName AS first_name, u.LastName AS last_name,
+            op.log_username AS operator_username
         FROM [tb_LockAuditTrail] a
         LEFT JOIN [tb_Locks] l ON a.id_object  = l.id_lock
         LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user
+        LEFT JOIN [vi_Operators_log_Username] op ON a.id_subject = op.id_operator
         WHERE 1=1
     ";
 
@@ -248,30 +250,53 @@ class DoorEventController extends Controller
         $code = (int) $r->EventCode;
         [$label, $category] = self::EVENT_CODES[$code] ?? ["Event {$code}", 'system'];
 
-        $name = trim($r->user_name ?? '');
-        if (! $name) {
-            $fn = trim($r->first_name ?? '');
-            $ln = trim($r->last_name ?? '');
-            $name = trim("{$fn} {$ln}");
-        }
-        // SALTO hotel mode stores room-mapped cardholders as "@<room>" — make readable.
-        if ($name && str_starts_with($name, '@')) {
-            $name = 'Rm-' . ltrim($name, '@');
+        $operatorUsername = $r->operator_username ?? null;
+
+        if ($operatorUsername) {
+            // Action was initiated by a SALTO operator (e.g. online open via API/app).
+            $appUser = $this->getOperatorMap()[$operatorUsername] ?? null;
+            $name    = $appUser ?? $operatorUsername;
+            $label   = 'Door Opened (Online)';
+            $category = 'access';
+        } else {
+            $name = trim($r->user_name ?? '');
+            if (! $name) {
+                $fn = trim($r->first_name ?? '');
+                $ln = trim($r->last_name ?? '');
+                $name = trim("{$fn} {$ln}");
+            }
+            // SALTO hotel mode stores room-mapped cardholders as "@<room>" — make readable.
+            if ($name && str_starts_with($name, '@')) {
+                $name = 'Rm-' . ltrim($name, '@');
+            }
         }
 
         return [
-            'counter'      => $r->InsertionCounter,
-            'datetime'     => $r->EventDateTime ? date('d/m/Y H:i:s', strtotime($r->EventDateTime)) : '—',
-            'event_code'   => $code,
-            'event_label'  => $label,
-            'category'     => $category,
-            'lock_id'      => $r->lock_id,
-            'lock_name'    => $r->lock_name ?? '—',
-            'lock_location'=> $r->lock_location ?? '—',
-            'user_id'      => $r->user_id,
-            'user_display' => $name ?: '—',
-            'cardcode'     => ($r->Cardcode && $r->Cardcode != 0) ? $r->Cardcode : null,
+            'counter'       => $r->InsertionCounter,
+            'datetime'      => $r->EventDateTime ? date('d/m/Y H:i:s', strtotime($r->EventDateTime)) : '—',
+            'event_code'    => $code,
+            'event_label'   => $label,
+            'category'      => $category,
+            'lock_id'       => $r->lock_id,
+            'lock_name'     => $r->lock_name ?? '—',
+            'lock_location' => $r->lock_location ?? '—',
+            'user_id'       => $r->user_id,
+            'user_display'  => $name ?: '—',
+            'cardcode'      => ($r->Cardcode && $r->Cardcode != 0) ? $r->Cardcode : null,
+            'is_online'     => (bool) $operatorUsername,
         ];
+    }
+
+    private ?array $operatorMapCache = null;
+
+    private function getOperatorMap(): array
+    {
+        if ($this->operatorMapCache === null) {
+            $this->operatorMapCache = \App\Models\User::whereNotNull('username')
+                ->pluck('name', 'username')
+                ->toArray();
+        }
+        return $this->operatorMapCache;
     }
 
     private function activeFilters(Request $request): string
