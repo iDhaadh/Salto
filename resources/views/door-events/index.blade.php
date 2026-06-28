@@ -119,6 +119,55 @@
     </div>
 </div>
 
+{{-- App Remote Opens --}}
+@if($appOpens->isNotEmpty())
+<div class="card mb-3 border-primary border-opacity-25">
+    <div class="card-header bg-transparent d-flex align-items-center gap-2 py-2">
+        <i class="bi bi-unlock text-primary"></i>
+        <span class="fw-semibold small">Remote Opens via App</span>
+        <span class="badge bg-primary rounded-pill ms-1">{{ $appOpens->count() }}</span>
+        <span class="text-muted small ms-auto">Last 100 opens — operator-level audit</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 small">
+                <thead>
+                    <tr>
+                        <th class="ps-3">Date & Time</th>
+                        <th>Door</th>
+                        <th>Opened By</th>
+                        <th>Status</th>
+                        <th class="pe-3">Ref (UUID)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($appOpens as $open)
+                        <tr>
+                            <td class="ps-3 text-nowrap text-muted">{{ $open->opened_at->format('d/m/Y H:i:s') }}</td>
+                            <td class="fw-semibold">{{ $open->door_name }}</td>
+                            <td>
+                                <i class="bi bi-person-badge me-1 text-primary"></i>
+                                {{ $open->user?->name ?? '—' }}
+                            </td>
+                            <td>
+                                @if($open->success)
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Sent</span>
+                                @else
+                                    <span class="badge bg-danger" title="{{ $open->error_message }}">
+                                        <i class="bi bi-x-circle me-1"></i>Failed
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="pe-3 text-muted font-monospace small">{{ $open->salto_uuid ?? '—' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Table --}}
 <div class="card">
     <div class="card-body p-0">

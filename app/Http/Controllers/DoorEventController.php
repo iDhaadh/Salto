@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DoorOpen;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -145,7 +146,10 @@ class DoorEventController extends Controller
         $todayCount  = DB::connection('salto')->selectOne("{$baseCount} AND CAST(a.EventDateTime AS DATE) = CAST(GETDATE() AS DATE)")->c ?? 0;
         $accessCount = DB::connection('salto')->selectOne("{$baseCount} AND a.EventCode = 17")->c ?? 0;
 
-        return view('door-events.index', compact('paginator', 'eventCodes', 'categories', 'totalCount', 'todayCount', 'accessCount'));
+        // App-initiated remote opens (our own audit log).
+        $appOpens = DoorOpen::with('user')->latest('opened_at')->limit(100)->get();
+
+        return view('door-events.index', compact('paginator', 'eventCodes', 'categories', 'totalCount', 'todayCount', 'accessCount', 'appOpens'));
     }
 
     public function exportPdf(Request $request)

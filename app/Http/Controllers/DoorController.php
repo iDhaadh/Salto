@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DoorOpen;
 use App\Services\SaltoApiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DoorController extends Controller
 {
@@ -28,8 +30,25 @@ class DoorController extends Controller
 
         try {
             $uuid = $this->salto->openDoor($id);
+
+            DoorOpen::create([
+                'user_id'    => Auth::id(),
+                'door_name'  => $name,
+                'salto_ap_id'=> $id,
+                'salto_uuid' => $uuid ?: null,
+                'success'    => true,
+            ]);
+
             session()->flash('status', "Open command sent for $name" . ($uuid ? " (ref: $uuid)" : ''));
         } catch (\Throwable $e) {
+            DoorOpen::create([
+                'user_id'     => Auth::id(),
+                'door_name'   => $name,
+                'salto_ap_id' => $id,
+                'success'     => false,
+                'error_message' => $e->getMessage(),
+            ]);
+
             session()->flash('error', "Failed to open $name: " . $e->getMessage());
         }
 
