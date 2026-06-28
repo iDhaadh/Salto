@@ -63,7 +63,8 @@ class LogController extends Controller
 
     public function exportPdf(Request $request): Response
     {
-        $logs = $this->buildQuery($request)->limit(2000)->get();
+        ini_set('memory_limit', '256M');
+        $logs = $this->buildQuery($request)->limit(500)->get();
         $filters = $this->activeFilters($request);
 
         $pdf = Pdf::loadView('logs.pdf', compact('logs', 'filters'))

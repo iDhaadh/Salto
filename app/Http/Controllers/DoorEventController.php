@@ -150,9 +150,11 @@ class DoorEventController extends Controller
 
     public function exportPdf(Request $request)
     {
+        ini_set('memory_limit', '256M');
+
         [$where, $bindings] = $this->buildWhere($request);
         $rows = DB::connection('salto')->select(
-            $this->makeSelect($where, 'TOP 1000') . " ORDER BY a.InsertionCounter DESC",
+            $this->makeSelect($where, 'TOP 500') . " ORDER BY a.InsertionCounter DESC",
             $bindings
         );
         $rows = collect($rows)->map(fn ($r) => $this->decorate($r));
