@@ -109,9 +109,9 @@
                             <td class="text-end" style="width:110px">
                                 <button type="button"
                                         class="btn btn-sm btn-outline-primary open-btn"
-                                        data-id="{{ $door['Id'] }}"
+                                        data-id="{{ $door['AttachedAccessPointId'] }}"
                                         data-name="{{ $door['Description'] ?? $door['Name'] }}"
-                                        data-url="{{ route('doors.open', $door['Id']) }}"
+                                        data-url="{{ route('doors.open', $door['AttachedAccessPointId']) }}"
                                         data-bs-toggle="modal"
                                         data-bs-target="#confirmModal">
                                     <i class="bi bi-unlock me-1"></i>Open
