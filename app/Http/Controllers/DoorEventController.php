@@ -250,6 +250,10 @@ class DoorEventController extends Controller
             $ln = trim($r->last_name ?? '');
             $name = trim("{$fn} {$ln}");
         }
+        // SALTO hotel mode stores room-mapped cardholders as "@<room>" — make readable.
+        if ($name && str_starts_with($name, '@')) {
+            $name = 'Rm-' . ltrim($name, '@');
+        }
 
         return [
             'counter'      => $r->InsertionCounter,
