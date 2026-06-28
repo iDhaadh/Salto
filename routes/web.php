@@ -3,6 +3,7 @@
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LogController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WhatsAppWebhookController;
@@ -26,6 +27,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/alerts', [AlertController::class, 'index'])->name('alerts.index');
     Route::post('/alerts/{alert}/resolve', [AlertController::class, 'resolve'])->name('alerts.resolve');
     Route::post('/alerts/{alert}/resend',  [AlertController::class, 'resend'])->name('alerts.resend');
+
+    Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
+    Route::get('/logs/export/pdf',   [LogController::class, 'exportPdf'])->name('logs.export.pdf');
+    Route::get('/logs/export/excel', [LogController::class, 'exportExcel'])->name('logs.export.excel');
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {
