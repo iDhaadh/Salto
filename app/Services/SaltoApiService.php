@@ -89,7 +89,7 @@ class SaltoApiService
     public function openDoor(int $accessPointId): string
     {
         $uuid = $this->rpc('StartExecuteOnlineAccessPointAction', [
-            'action'            => 1,
+            'action'            => 0,
             'accessPointIdList' => [$accessPointId],
         ]);
 
