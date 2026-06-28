@@ -44,10 +44,16 @@
                         <select name="role" class="form-select @error('role') is-invalid @enderror"
                                 {{ $user->id === auth()->id() ? 'disabled' : '' }}>
                             <option value="viewer" {{ old('role', $user->role) === 'viewer' ? 'selected' : '' }}>
-                                Viewer — can view Locks and Alerts
+                                Viewer — Locks, Alerts
+                            </option>
+                            <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>
+                                Staff — Locks, Alerts, Door Events
+                            </option>
+                            <option value="operator" {{ old('role', $user->role) === 'operator' ? 'selected' : '' }}>
+                                Operator — Locks, Alerts, Doors, Door Events
                             </option>
                             <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>
-                                Admin — full access including Settings
+                                Admin — full access including Settings &amp; Users
                             </option>
                         </select>
                         @if($user->id === auth()->id())

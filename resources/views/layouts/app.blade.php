@@ -76,21 +76,27 @@
                         @endif
                     </a>
                 </li>
+                @if(auth()->user()->canAccessDoors())
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('doors.*') ? 'active' : '' }}" href="{{ route('doors.index') }}">
                         <i class="bi bi-door-open me-1 opacity-75"></i>Doors
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->canAccessDoorEvents())
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('door-events.*') ? 'active' : '' }}" href="{{ route('door-events.index') }}">
                         <i class="bi bi-journal-check me-1 opacity-75"></i>Door Events
                     </a>
                 </li>
+                @endif
+                @if(auth()->user()->isAdmin())
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('logs.*') ? 'active' : '' }}" href="{{ route('logs.index') }}">
                         <i class="bi bi-journal-text me-1 opacity-75"></i>Notif. Logs
                     </a>
                 </li>
+                @endif
                 @if(auth()->user()->isAdmin())
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('settings.*') ? 'active' : '' }}" href="{{ route('settings.edit') }}">
@@ -108,7 +114,15 @@
             <div class="d-flex align-items-center gap-3 pb-2 pb-lg-0 border-top border-secondary mt-2 mt-lg-0 pt-2 pt-lg-0 border-lg-0">
                 <div class="text-white-50 small">
                     <i class="bi bi-person-circle me-1"></i>{{ auth()->user()->name }}
-                    <span class="badge ms-1" style="font-size:.65rem;background:{{ auth()->user()->isAdmin() ? '#6366f1' : '#6b7280' }}">
+                    @php
+                        $roleColor = match(auth()->user()->role) {
+                            'admin'    => '#6366f1',
+                            'operator' => '#3b82f6',
+                            'staff'    => '#14b8a6',
+                            default    => '#6b7280',
+                        };
+                    @endphp
+                    <span class="badge ms-1" style="font-size:.65rem;background:{{ $roleColor }}">
                         {{ ucfirst(auth()->user()->role) }}
                     </span>
                 </div>

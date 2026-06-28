@@ -34,12 +34,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/logs/export/pdf',   [LogController::class, 'exportPdf'])->name('logs.export.pdf');
     Route::get('/logs/export/excel', [LogController::class, 'exportExcel'])->name('logs.export.excel');
 
-    Route::get('/door-events', [DoorEventController::class, 'index'])->name('door-events.index');
-    Route::get('/door-events/export/pdf',   [DoorEventController::class, 'exportPdf'])->name('door-events.export.pdf');
-    Route::get('/door-events/export/excel', [DoorEventController::class, 'exportExcel'])->name('door-events.export.excel');
+    Route::middleware('can-door-events')->group(function () {
+        Route::get('/door-events', [DoorEventController::class, 'index'])->name('door-events.index');
+        Route::get('/door-events/export/pdf',   [DoorEventController::class, 'exportPdf'])->name('door-events.export.pdf');
+        Route::get('/door-events/export/excel', [DoorEventController::class, 'exportExcel'])->name('door-events.export.excel');
+    });
 
-    Route::get('/doors', [DoorController::class, 'index'])->name('doors.index');
-    Route::post('/doors/{id}/open', [DoorController::class, 'open'])->name('doors.open');
+    Route::middleware('can-doors')->group(function () {
+        Route::get('/doors', [DoorController::class, 'index'])->name('doors.index');
+        Route::post('/doors/{id}/open', [DoorController::class, 'open'])->name('doors.open');
+    });
 
     // Admin-only routes
     Route::middleware('admin')->group(function () {

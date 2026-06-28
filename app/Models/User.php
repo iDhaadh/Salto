@@ -24,13 +24,18 @@ class User extends Authenticatable
         ];
     }
 
-    public function isAdmin(): bool
+    public function isAdmin(): bool    { return $this->role === 'admin'; }
+    public function isViewer(): bool   { return $this->role === 'viewer'; }
+    public function isStaff(): bool    { return $this->role === 'staff'; }
+    public function isOperator(): bool { return $this->role === 'operator'; }
+
+    public function canAccessDoorEvents(): bool
     {
-        return $this->role === 'admin';
+        return in_array($this->role, ['admin', 'operator', 'staff']);
     }
 
-    public function isViewer(): bool
+    public function canAccessDoors(): bool
     {
-        return $this->role === 'viewer';
+        return in_array($this->role, ['admin', 'operator']);
     }
 }
