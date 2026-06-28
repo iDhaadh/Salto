@@ -70,21 +70,28 @@
 <div class="card">
     <div class="card-body p-0">
         {{-- Table toolbar --}}
-        <div class="d-flex align-items-center gap-3 px-3 pt-3 pb-2 border-bottom">
-            <div class="input-group input-group-sm" style="max-width: 280px;">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" id="lockSearch" class="form-control border-start-0 ps-0"
-                       placeholder="Search locks…" autocomplete="off">
-            </div>
+        <div class="d-flex align-items-center gap-3 px-3 pt-3 pb-2 border-bottom flex-wrap">
+            <form method="GET" action="{{ route('dashboard') }}" class="d-flex gap-2 align-items-center">
+                @if($filter)<input type="hidden" name="battery" value="{{ $filter }}">@endif
+                <div class="input-group input-group-sm" style="max-width: 280px;">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control border-start-0 ps-0"
+                           placeholder="Search locks…" value="{{ $search }}" autocomplete="off">
+                </div>
+                @if($search)
+                    <a href="{{ route('dashboard', $filter ? ['battery' => $filter] : []) }}"
+                       class="btn btn-sm btn-outline-secondary">Clear</a>
+                @endif
+            </form>
             @if ($filter)
                 <span class="text-muted small">
                     Filtered: <span class="badge text-bg-secondary text-uppercase">{{ $filter }}</span>
-                    <a href="{{ route('dashboard') }}" class="ms-1 small">clear</a>
+                    <a href="{{ route('dashboard', $search ? ['q' => $search] : []) }}" class="ms-1 small">clear</a>
                 </span>
             @endif
-            <span class="text-muted small ms-auto" id="lockCount">{{ $locks->total() }} locks</span>
+            <span class="text-muted small ms-auto">{{ $locks->total() }} locks</span>
         </div>
 
         <div class="table-responsive">
@@ -140,21 +147,3 @@
 <div class="mt-3 d-flex justify-content-end">{{ $locks->links() }}</div>
 @endsection
 
-@push('scripts')
-<script>
-    const searchInput = document.getElementById('lockSearch');
-    const rows = document.querySelectorAll('#lockTable tbody tr');
-    const lockCount = document.getElementById('lockCount');
-
-    searchInput.addEventListener('input', function () {
-        const q = this.value.toLowerCase().trim();
-        let visible = 0;
-        rows.forEach(row => {
-            const match = !q || row.textContent.toLowerCase().includes(q);
-            row.style.display = match ? '' : 'none';
-            if (match) visible++;
-        });
-        lockCount.textContent = visible + ' lock' + (visible !== 1 ? 's' : '');
-    });
-</script>
-@endpush

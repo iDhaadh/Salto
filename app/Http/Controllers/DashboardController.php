@@ -14,6 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $filter = $request->query('battery');
+        $search = trim($request->query('q', ''));
 
         $query = Lock::query()->orderByRaw(
             "CASE battery_status WHEN 'flat' THEN 0 WHEN 'low' THEN 1 WHEN 'unknown' THEN 2 ELSE 3 END"
@@ -21,6 +22,14 @@ class DashboardController extends Controller
 
         if (in_array($filter, ['normal', 'low', 'flat', 'unknown'], true)) {
             $query->where('battery_status', $filter);
+        }
+
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('location', 'like', '%' . $search . '%')
+                  ->orWhere('salto_id', 'like', '%' . $search . '%');
+            });
         }
 
         $locks = $query->paginate(25)->withQueryString();
@@ -35,9 +44,10 @@ class DashboardController extends Controller
         $lastSync = Lock::max('synced_at');
 
         return view('dashboard.index', [
-            'locks' => $locks,
-            'counts' => $counts,
-            'filter' => $filter,
+            'locks'   => $locks,
+            'counts'  => $counts,
+            'filter'  => $filter,
+            'search'  => $search,
             'lastSync' => $lastSync,
             'statuses' => BatteryStatus::cases(),
         ]);
