@@ -140,13 +140,15 @@ class SaltoApiService
                 return [];
             }
 
-            // API BatteryStatus meanings for RF3 online locks (confirmed against SALTO Space UI):
-            //   0 = no fresh reading → skip, let DB value be used
-            //   1 = Normal/OK
-            //   2 = Normal/OK (different signal level, still good — SALTO shows "Normal")
-            //   3 = Low warning (RF3 real-time battery alert)
+            // API BatteryStatus values from GetOnlineAccessPointStatus:
+            //   0 = Normal/OK (no battery issue — real-time from the lock)
+            //   1 = Normal/OK (alternative normal signal level)
+            //   2 = Normal/OK
+            //   3 = Low warning
             //   4+ = Flat/Dead (critical)
-            $map = [1 => BatteryStatus::Normal, 2 => BatteryStatus::Normal, 3 => BatteryStatus::Low, 4 => BatteryStatus::Flat];
+            // BatteryStatus=0 is NOT "no reading" — it IS a real-time normal status.
+            // The DB Battery column lags behind physical battery changes; the API is authoritative.
+            $map = [0 => BatteryStatus::Normal, 1 => BatteryStatus::Normal, 2 => BatteryStatus::Normal, 3 => BatteryStatus::Low, 4 => BatteryStatus::Flat];
 
             $result = [];
             foreach ($statuses as $s) {

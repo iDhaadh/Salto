@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Admin login for the dashboard. Override via ADMIN_EMAIL / ADMIN_PASSWORD.
-        User::updateOrCreate(
+        // Password is only set on first creation — never overwritten on re-seed.
+        $admin = User::firstOrCreate(
             ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
             [
                 'name'     => 'Administrator',
@@ -21,6 +22,14 @@ class DatabaseSeeder extends Seeder
                 'role'     => 'admin',
             ],
         );
+
+        if (! $admin->wasRecentlyCreated) {
+            $admin->update([
+                'name'     => 'Administrator',
+                'username' => env('ADMIN_USERNAME', 'admin'),
+                'role'     => 'admin',
+            ]);
+        }
 
         // Seed default settings from config so the Settings page is pre-filled.
         $defaults = [
