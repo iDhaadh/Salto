@@ -58,4 +58,15 @@ return [
         'flat'   => ['flat', 'dead', 'empty', 'critical', 'replace'],
     ],
 
+    /*
+    | ProAccess Space REST/RPC API (used for remote door open).
+    | Authentication: OAuth2 password grant with salted SHA-256 password hash.
+    */
+    'api' => [
+        'url'              => env('SALTO_API_URL', 'http://192.168.60.15:8100'),
+        'username'         => env('SALTO_API_USERNAME', 'it'),
+        'password'         => env('SALTO_API_PASSWORD', ''),
+        'timezone_offset'  => (int) env('SALTO_API_TIMEZONE_OFFSET', 300),
+    ],
+
 ];

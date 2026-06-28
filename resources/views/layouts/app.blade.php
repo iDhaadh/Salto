@@ -77,8 +77,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link {{ request()->routeIs('doors.*') ? 'active' : '' }}" href="{{ route('doors.index') }}">
+                        <i class="bi bi-door-open me-1 opacity-75"></i>Doors
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('door-events.*') ? 'active' : '' }}" href="{{ route('door-events.index') }}">
-                        <i class="bi bi-door-open me-1 opacity-75"></i>Door Events
+                        <i class="bi bi-journal-check me-1 opacity-75"></i>Door Events
                     </a>
                 </li>
                 <li class="nav-item">
