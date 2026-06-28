@@ -17,4 +17,9 @@ final class LockReading
         public readonly ?CarbonImmutable $lastSeenAt,
     ) {
     }
+
+    public function withBattery(BatteryStatus $battery): self
+    {
+        return new self($this->saltoId, $this->name, $this->location, $battery, $this->lastSeenAt);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\BatteryStatus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -93,5 +94,72 @@ class SaltoApiService
         ]);
 
         return is_string($uuid) ? $uuid : '';
+    }
+
+    /**
+     * Returns real-time battery status for all online RF3 locks.
+     *
+     * Key = SALTO DB lock id (tb_Locks.id_lock, same as AttachedAccessPointId).
+     * Value = BatteryStatus enum derived from the API's BatteryStatus field:
+     *   0 → Low, 1 → Normal, 2 → Flat, other → null (skip, keep DB value).
+     *
+     * Returns empty array on any API failure so the DB fallback is used.
+     *
+     * @return array<string, BatteryStatus>
+     */
+    public function getOnlineBatteryStatuses(): array
+    {
+        if (empty($this->password)) {
+            return [];
+        }
+
+        try {
+            $doors = $this->getDoors();
+            if (empty($doors)) {
+                return [];
+            }
+
+            // Build maps: online_ap_id → db_lock_id  AND  online_ap_id list
+            $apIds       = [];
+            $apToLockId  = [];
+            foreach ($doors as $door) {
+                $apId   = (int) ($door['Id'] ?? 0);
+                $lockId = (string) ($door['AttachedAccessPointId'] ?? '');
+                if ($apId && $lockId !== '') {
+                    $apIds[]            = $apId;
+                    $apToLockId[$apId]  = $lockId;
+                }
+            }
+
+            if (empty($apIds)) {
+                return [];
+            }
+
+            $statuses = $this->rpc('GetOnlineAccessPointStatus', ['accessPointIdList' => $apIds]);
+            if (! is_array($statuses)) {
+                return [];
+            }
+
+            // API BatteryStatus meanings for RF3 online locks:
+            //   0 = no fresh reading (default state) → skip, let DB value be used
+            //   1 = Normal/OK (recently confirmed or replaced)
+            //   2 = Low warning (RF3 real-time battery alert)
+            //   3+ = Flat/Dead (critical, rare)
+            $map = [1 => BatteryStatus::Normal, 2 => BatteryStatus::Low, 3 => BatteryStatus::Flat];
+
+            $result = [];
+            foreach ($statuses as $s) {
+                $apId   = (int) ($s['AccessPointId'] ?? 0);
+                $apiVal = $s['BatteryStatus'] ?? null;
+                $lockId = $apToLockId[$apId] ?? null;
+                if ($lockId !== null && isset($map[$apiVal])) {
+                    $result[$lockId] = $map[$apiVal];
+                }
+            }
+
+            return $result;
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }

@@ -21,6 +21,7 @@ class BatteryMonitor
     public function __construct(
         private readonly SaltoLockRepository $repository,
         private readonly AlertNotifier $notifier,
+        private readonly SaltoApiService $api,
     ) {
     }
 
@@ -32,6 +33,17 @@ class BatteryMonitor
     public function run(): array
     {
         $readings = $this->repository->all();
+
+        // Merge real-time API battery status for online RF3 locks.
+        // Falls back to DB value if API is unavailable or lock is offline.
+        $apiBattery = $this->api->getOnlineBatteryStatuses();
+        if (! empty($apiBattery)) {
+            $readings = $readings->map(function ($reading) use ($apiBattery) {
+                return isset($apiBattery[$reading->saltoId])
+                    ? $reading->withBattery($apiBattery[$reading->saltoId])
+                    : $reading;
+            });
+        }
 
         $stats = ['scanned' => 0, 'low' => 0, 'flat' => 0, 'opened' => 0, 'reminded' => 0, 'resolved' => 0, 'jobs' => 0];
         $reminderThreshold = now()->subHours(Settings::reminderHours());
