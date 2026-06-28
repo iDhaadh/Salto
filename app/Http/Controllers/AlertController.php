@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Alert;
 use App\Repositories\SaltoLockRepository;
 use App\Services\AlertNotifier;
+use App\Services\SaltoApiService;
 use App\Support\BatteryStatus;
 use App\Support\LockSnapshot;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +31,7 @@ class AlertController extends Controller
         ]);
     }
 
-    public function resolve(Alert $alert, Request $request, SaltoLockRepository $salto, AlertNotifier $notifier): RedirectResponse
+    public function resolve(Alert $alert, Request $request, SaltoLockRepository $salto, AlertNotifier $notifier, SaltoApiService $saltoApi): RedirectResponse
     {
         if ($alert->status !== 'open') {
             return back()->with('status', 'Alert is already resolved.');
@@ -41,17 +42,31 @@ class AlertController extends Controller
         // Check current live status from SALTO unless admin forces it.
         if (! $request->boolean('force') && $lock) {
             try {
-                $reading = $salto->findBySaltoId($lock->salto_id);
+                // Prefer the live online API (same source as SALTO Space online monitoring).
+                $liveStatuses = $saltoApi->getOnlineBatteryStatuses();
+                $liveBattery  = $liveStatuses[$lock->salto_id] ?? null;
 
-                if ($reading && $reading->battery->isAlertable()) {
+                if ($liveBattery !== null) {
+                    // Fresh live reading available — use it.
+                    $currentBattery = $liveBattery;
+                } else {
+                    // No live reading (lock not actively reporting — BatteryStatus=0).
+                    // Fall back to SALTO DB only if the reading is recent (≤7 days).
+                    // Older readings are too stale to block a manual resolve.
+                    $reading = $salto->findBySaltoId($lock->salto_id);
+                    $isRecent = $lock->last_seen_at && $lock->last_seen_at->isAfter(now()->subDays(7));
+                    $currentBattery = ($reading && $isRecent) ? $reading->battery : null;
+                }
+
+                if ($currentBattery && $currentBattery->isAlertable()) {
                     // Still bad in SALTO — reopen/keep open and re-notify.
                     $alert->update(['last_notified_at' => now()]);
                     $snapshot = LockSnapshot::fromLock($lock);
-                    $notifier->notify($snapshot, $reading->battery, 'reminder', $alert);
+                    $notifier->notify($snapshot, $currentBattery, 'reminder', $alert);
 
                     return back()->with('error',
                         "Cannot resolve — SALTO still reports \"{$lock->name}\" battery as "
-                        . strtoupper($reading->battery->label())
+                        . strtoupper($currentBattery->label())
                         . '. Notification resent. Replace the battery first, or use Force Resolve.'
                     );
                 }
