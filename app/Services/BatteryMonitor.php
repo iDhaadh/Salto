@@ -36,14 +36,21 @@ class BatteryMonitor
 
         // Merge real-time API battery status for online RF3 locks.
         // Falls back to DB value if API is unavailable or lock is offline.
+        // If the API has no reading (BatteryStatus=0) and the DB data is older
+        // than 30 days, treat the battery as Unknown to avoid re-triggering
+        // alerts from stale readings the lock hasn't refreshed in months.
         $apiBattery = $this->api->getOnlineBatteryStatuses();
-        if (! empty($apiBattery)) {
-            $readings = $readings->map(function ($reading) use ($apiBattery) {
-                return isset($apiBattery[$reading->saltoId])
-                    ? $reading->withBattery($apiBattery[$reading->saltoId])
-                    : $reading;
-            });
-        }
+        $readings = $readings->map(function ($reading) use ($apiBattery) {
+            if (isset($apiBattery[$reading->saltoId])) {
+                return $reading->withBattery($apiBattery[$reading->saltoId]);
+            }
+            if ($reading->battery->isAlertable()
+                && $reading->lastSeenAt
+                && $reading->lastSeenAt->isBefore(now()->subDays(30))) {
+                return $reading->withBattery(BatteryStatus::Unknown);
+            }
+            return $reading;
+        });
 
         $stats = ['scanned' => 0, 'low' => 0, 'flat' => 0, 'opened' => 0, 'reminded' => 0, 'resolved' => 0, 'jobs' => 0];
         $reminderThreshold = now()->subHours(Settings::reminderHours());
