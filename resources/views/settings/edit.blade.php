@@ -371,24 +371,6 @@
                         <span class="text-muted fw-normal small ms-2">Must be pre-approved in Meta Business Manager.</span>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-info small mb-3">
-                            <i class="bi bi-info-circle me-1"></i>
-                            <strong>Template body</strong> uses 3 parameters:
-                            <code>@{{1}}</code> lock name &nbsp;
-                            <code>@{{2}}</code> battery status &nbsp;
-                            <code>@{{3}}</code> timestamp<br>
-                            <strong>Low battery template example:</strong><br>
-                            <em>⚠️ SALTO lock *@{{1}}* battery is *@{{2}}* as of @{{3}}. Please change the battery.</em><br>
-                            <strong>Flat / Dead template example:</strong><br>
-                            <em>🔴 URGENT: SALTO lock *@{{1}}* battery is *@{{2}}* as of @{{3}}. Please change the battery immediately!</em>
-                        </div>
-                        <div class="alert alert-success small mb-3">
-                            <i class="bi bi-check2-square me-1"></i>
-                            <strong>Add a "Resolved ✓" button</strong> — when creating each template in Meta Business Manager,
-                            scroll to <strong>Buttons → Add button → Quick Reply</strong> and set the button text to
-                            <code>Resolved ✓</code>. When a recipient taps it, the alert is automatically marked resolved
-                            in the dashboard via the webhook at <code>{{ $waWebhookUrl ?: url('/api/whatsapp/webhook') }}</code>.
-                        </div>
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <label class="form-label">Template — Low battery <span class="text-danger">*</span></label>
@@ -453,18 +435,6 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="h6"><i class="bi bi-lightbulb me-1"></i> Setup checklist</h2>
-                        <ul class="small text-muted ps-3 mb-0">
-                            <li>Create a Meta Business account</li>
-                            <li>Add a WhatsApp Business phone number</li>
-                            <li>Generate a <strong>permanent</strong> system user token</li>
-                            <li>Create and get two message templates approved (Low + Flat)</li>
-                            <li>Copy the <strong>Phone Number ID</strong> from API Setup</li>
-                        </ul>
-                    </div>
-                </div>
             </div>
         </div>
     </form>
@@ -554,7 +524,6 @@
                 <div class="card mb-4">
                     <div class="card-header fw-semibold">
                         <i class="bi bi-table me-1"></i> Schema mapping
-                        <span class="text-muted fw-normal small ms-2">Run <code>php artisan salto:discover</code> to find column names.</span>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
@@ -612,14 +581,6 @@
                             <i class="bi bi-plug me-1"></i> Test connection
                         </button>
                         <div id="conn-test-result" class="mt-2" hidden></div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body">
-                        <h2 class="h6"><i class="bi bi-lightbulb me-1"></i> Discovery tip</h2>
-                        <p class="text-muted small mb-2">Not sure which columns hold battery data?</p>
-                        <pre class="bg-light rounded p-2 small mb-2">docker compose exec app php artisan salto:discover</pre>
-                        <pre class="bg-light rounded p-2 small mb-0">php artisan salto:discover --sample=tb_Locks</pre>
                     </div>
                 </div>
             </div>
