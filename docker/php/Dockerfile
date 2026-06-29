@@ -24,6 +24,11 @@ RUN docker-php-ext-install -j"$(nproc)" pdo_mysql bcmath intl zip \
     && pecl install sqlsrv pdo_sqlsrv \
     && docker-php-ext-enable sqlsrv pdo_sqlsrv
 
+# --- PHP runtime settings ----------------------------------------------------
+RUN echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/99-custom.ini \
+    && echo "upload_max_filesize = 64M" >> /usr/local/etc/php/conf.d/99-custom.ini \
+    && echo "post_max_size = 64M" >> /usr/local/etc/php/conf.d/99-custom.ini
+
 # --- Composer ----------------------------------------------------------------
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

@@ -156,7 +156,7 @@ class DoorEventController extends Controller
 
     public function exportPdf(Request $request)
     {
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M');
 
         [$where, $bindings] = $this->buildWhere($request);
         $rows = DB::connection('salto')->select(
