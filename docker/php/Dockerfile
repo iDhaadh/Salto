@@ -6,6 +6,7 @@ FROM php:8.4-fpm-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git unzip curl ca-certificates gnupg2 apt-transport-https \
         libzip-dev libicu-dev libonig-dev unixodbc-dev \
+        libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Microsoft ODBC Driver 18 for SQL Server (Debian 12 / bookworm) ----------
@@ -20,7 +21,8 @@ RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
     && rm -rf /var/lib/apt/lists/*
 
 # --- PHP extensions ----------------------------------------------------------
-RUN docker-php-ext-install -j"$(nproc)" pdo_mysql bcmath intl zip \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql bcmath intl zip gd \
     && pecl install sqlsrv pdo_sqlsrv \
     && docker-php-ext-enable sqlsrv pdo_sqlsrv
 

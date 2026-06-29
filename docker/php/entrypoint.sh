@@ -3,11 +3,10 @@ set -e
 
 cd /var/www/html
 
-# Install PHP dependencies if they're missing (e.g. fresh checkout / clean prod build).
-if [ ! -d vendor ]; then
-    echo "[entrypoint] Installing composer dependencies..."
-    composer install --no-interaction --prefer-dist --optimize-autoloader
-fi
+# Always sync composer dependencies so new packages added to composer.json
+# are installed on redeploy without needing a manual step.
+echo "[entrypoint] Syncing composer dependencies..."
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 # Generate an app key if one isn't set.
 if ! grep -q '^APP_KEY=base64:' .env 2>/dev/null; then
