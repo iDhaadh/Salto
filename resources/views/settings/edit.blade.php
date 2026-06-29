@@ -760,7 +760,7 @@
                     </div>
                     <div class="card-body">
                         <textarea name="sms_body_template" class="form-control font-monospace" rows="5"
-                                  placeholder='{"to":"{{to}}","from":"{{from}}","message":"{{message}}"}'>{{ old('sms_body_template', $smsBodyTemplate) }}</textarea>
+                                  placeholder='{"to":"@{{to}}","from":"@{{from}}","message":"@{{message}}"}'>{{ old('sms_body_template', $smsBodyTemplate) }}</textarea>
                         <div class="form-text">JSON or plain-text body sent with POST requests. Placeholders: <code>&#123;&#123;to&#125;&#125;</code> <code>&#123;&#123;from&#125;&#125;</code> <code>&#123;&#123;message&#125;&#125;</code>.</div>
                     </div>
                 </div>
