@@ -655,7 +655,7 @@
                                 <label class="form-label">Sender ID / From Number</label>
                                 <input type="text" name="sms_sender_id" class="form-control"
                                        value="{{ old('sms_sender_id', $smsSenderId) }}"
-                                       placeholder="+9607XXXXXXX or PASSFLOW">
+                                       placeholder="+9607XXXXXXX">
                             </div>
                         </div>
                     </div>
