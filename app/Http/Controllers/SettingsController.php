@@ -29,6 +29,11 @@ class SettingsController extends Controller
             'whatsappEnabled'  => Settings::whatsappEnabled(),
             'emails'           => implode(', ', Settings::emailRecipients()),
             'whatsapp'         => implode(', ', Settings::whatsappRecipients()),
+            // Badge flags — check DB only (not .env fallbacks) so "Configured" is accurate
+            'smtpConfigured'   => (bool) Settings::get('smtp_host'),
+            'waConfigured'     => Settings::get('wa_token') !== null && (bool) Settings::get('wa_phone_id'),
+            'saltoConfigured'  => (bool) Settings::get('salto_host'),
+            'saltoMonitoringEnabled' => Settings::saltoMonitoringEnabled(),
             // Email / SMTP
             'smtpHost'         => Settings::smtpHost(),
             'smtpPort'         => Settings::smtpPort(),
@@ -108,6 +113,7 @@ class SettingsController extends Controller
         Settings::put('smtp_encryption',    $data['smtp_encryption']);
         Settings::put('mail_from_address',  $data['mail_from_address']);
         Settings::put('mail_from_name',     $data['mail_from_name']);
+        Settings::put('email_enabled',      $request->boolean('email_enabled') ? 1 : 0);
 
         if (filled($data['smtp_password'] ?? null)) {
             Settings::put('smtp_password', $data['smtp_password']);
@@ -171,6 +177,7 @@ class SettingsController extends Controller
             'wa_template_locale' => ['required', 'string', 'max:16'],
         ]);
 
+        Settings::put('whatsapp_enabled',   $request->boolean('whatsapp_enabled') ? 1 : 0);
         Settings::put('wa_phone_id',        $data['wa_phone_id']);
         Settings::put('wa_api_version',     $data['wa_api_version']);
         Settings::put('wa_template_low',    $data['wa_template_low']);
@@ -272,7 +279,8 @@ class SettingsController extends Controller
         Settings::put('salto_database',     $data['salto_database']);
         Settings::put('salto_username',     $data['salto_username']);
         Settings::put('salto_encrypt',      $data['salto_encrypt']);
-        Settings::put('salto_trust_cert',   $request->boolean('salto_trust_cert') ? 'true' : 'false');
+        Settings::put('salto_trust_cert',         $request->boolean('salto_trust_cert') ? 'true' : 'false');
+        Settings::put('salto_monitoring_enabled', $request->boolean('salto_monitoring_enabled') ? 1 : 0);
 
         // Only overwrite the password if the user typed one.
         if (filled($data['salto_password'] ?? null)) {

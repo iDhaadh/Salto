@@ -30,8 +30,12 @@
         <button class="nav-link {{ $activeTab === 'email' ? 'active' : '' }}"
                 data-bs-toggle="tab" data-bs-target="#pane-email" type="button" role="tab">
             <i class="bi bi-envelope me-1"></i> Email / SMTP
-            @if($smtpHost)
-                <span class="badge bg-success ms-1">Configured</span>
+            @if($smtpConfigured)
+                @if($emailEnabled)
+                    <span class="badge bg-success ms-1">Enabled</span>
+                @else
+                    <span class="badge bg-secondary ms-1">Disabled</span>
+                @endif
             @else
                 <span class="badge bg-warning text-dark ms-1">Not set</span>
             @endif
@@ -41,8 +45,12 @@
         <button class="nav-link {{ $activeTab === 'whatsapp' ? 'active' : '' }}"
                 data-bs-toggle="tab" data-bs-target="#pane-whatsapp" type="button" role="tab">
             <i class="bi bi-whatsapp me-1"></i> WhatsApp API
-            @if($waTokenSet && $waPhoneId)
-                <span class="badge bg-success ms-1">Configured</span>
+            @if($waConfigured)
+                @if($whatsappEnabled)
+                    <span class="badge bg-success ms-1">Enabled</span>
+                @else
+                    <span class="badge bg-secondary ms-1">Disabled</span>
+                @endif
             @else
                 <span class="badge bg-warning text-dark ms-1">Not set</span>
             @endif
@@ -52,8 +60,12 @@
         <button class="nav-link {{ $activeTab === 'connection' ? 'active' : '' }}"
                 data-bs-toggle="tab" data-bs-target="#pane-connection" type="button" role="tab">
             <i class="bi bi-database me-1"></i> SALTO Database
-            @if($saltoHost)
-                <span class="badge bg-success ms-1">Configured</span>
+            @if($saltoConfigured)
+                @if($saltoMonitoringEnabled)
+                    <span class="badge bg-success ms-1">Enabled</span>
+                @else
+                    <span class="badge bg-secondary ms-1">Disabled</span>
+                @endif
             @else
                 <span class="badge bg-warning text-dark ms-1">Not set</span>
             @endif
@@ -153,6 +165,17 @@
 
     <form method="POST" action="{{ route('settings.email.update') }}">
         @csrf @method('PUT')
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-body-tertiary rounded border">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="email_enabled" id="email_enabled_toggle"
+                       {{ $emailEnabled ? 'checked' : '' }}>
+                <label class="form-check-label fw-semibold" for="email_enabled_toggle">
+                    Email notifications enabled
+                </label>
+            </div>
+            <span class="text-muted small">Toggle off to pause all email alerts without removing your settings.</span>
+        </div>
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card mb-4">
@@ -264,6 +287,17 @@
 
     <form method="POST" action="{{ route('settings.whatsapp.update') }}">
         @csrf @method('PUT')
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-body-tertiary rounded border">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="whatsapp_enabled" id="whatsapp_enabled_toggle"
+                       {{ $whatsappEnabled ? 'checked' : '' }}>
+                <label class="form-check-label fw-semibold" for="whatsapp_enabled_toggle">
+                    WhatsApp notifications enabled
+                </label>
+            </div>
+            <span class="text-muted small">Toggle off to pause all WhatsApp alerts without removing your settings.</span>
+        </div>
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card mb-4">
@@ -451,6 +485,17 @@
 
     <form method="POST" action="{{ route('settings.connection.update') }}">
         @csrf @method('PUT')
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-body-tertiary rounded border">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="salto_monitoring_enabled" id="salto_monitoring_toggle"
+                       {{ $saltoMonitoringEnabled ? 'checked' : '' }}>
+                <label class="form-check-label fw-semibold" for="salto_monitoring_toggle">
+                    Battery monitoring enabled
+                </label>
+            </div>
+            <span class="text-muted small">Toggle off to pause all battery scans without removing your connection settings.</span>
+        </div>
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card mb-4">
