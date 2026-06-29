@@ -64,6 +64,21 @@
             @endif
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {{ $activeTab === 'sms' ? 'active' : '' }}"
+                data-bs-toggle="tab" data-bs-target="#pane-sms" type="button" role="tab">
+            <i class="bi bi-phone me-1"></i> SMS
+            @if($smsConfigured)
+                @if($smsEnabled)
+                    <span class="badge bg-success ms-1">Enabled</span>
+                @else
+                    <span class="badge bg-secondary ms-1">Disabled</span>
+                @endif
+            @else
+                <span class="badge bg-warning text-dark ms-1">Not set</span>
+            @endif
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content" id="settingsTabContent">
@@ -588,6 +603,207 @@
     </form>
 </div>
 
+{{-- ══════════════════════════════════════════════════════════════════════
+     TAB 5 — SMS
+════════════════════════════════════════════════════════════════════════ --}}
+<div class="tab-pane fade {{ $activeTab === 'sms' ? 'show active' : '' }}"
+     id="pane-sms" role="tabpanel">
+
+    <form method="POST" action="{{ route('settings.sms.update') }}">
+        @csrf @method('PUT')
+
+        {{-- Header --}}
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="h5 mb-0"><i class="bi bi-phone me-1"></i> SMS Integration</h2>
+            <span class="badge {{ $smsEnabled ? 'bg-success' : 'bg-secondary' }}">
+                {{ $smsEnabled ? 'Active' : 'Inactive' }}
+            </span>
+        </div>
+        <p class="text-muted small mb-4">Generic HTTP API — use <code>&#123;&#123;to&#125;&#125;</code> <code>&#123;&#123;message&#125;&#125;</code> <code>&#123;&#123;from&#125;&#125;</code> placeholders in the endpoint URL and body template.</p>
+
+        {{-- Enable toggle --}}
+        <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-body-tertiary rounded border">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="sms_enabled" id="sms_enabled_toggle"
+                       {{ $smsEnabled ? 'checked' : '' }}>
+                <label class="form-check-label fw-semibold" for="sms_enabled_toggle">
+                    Enable SMS notifications
+                </label>
+            </div>
+            <span class="text-muted small">Toggle off to pause all SMS alerts without removing your settings.</span>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-8">
+
+                {{-- Provider info --}}
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-info-circle me-1"></i> Provider
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label">Provider Name</label>
+                                <input type="text" name="sms_provider_name" class="form-control"
+                                       value="{{ old('sms_provider_name', $smsProviderName) }}"
+                                       placeholder="e.g. Twilio, ClickSend, Dhiraagu SMS">
+                                <div class="form-text">Label only — for your reference.</div>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Sender ID / From Number</label>
+                                <input type="text" name="sms_sender_id" class="form-control"
+                                       value="{{ old('sms_sender_id', $smsSenderId) }}"
+                                       placeholder="+9607XXXXXXX or PASSFLOW">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Endpoint --}}
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-link-45deg me-1"></i> API Endpoint
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-sm-9">
+                                <label class="form-label">API Endpoint URL <span class="text-danger">*</span></label>
+                                <input type="url" name="sms_endpoint"
+                                       class="form-control @error('sms_endpoint') is-invalid @enderror"
+                                       value="{{ old('sms_endpoint', $smsEndpoint) }}"
+                                       placeholder="https://api.example.com/sms/send">
+                                @error('sms_endpoint')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                <div class="form-text">Use <code>&#123;&#123;to&#125;&#125;</code>, <code>&#123;&#123;from&#125;&#125;</code>, <code>&#123;&#123;message&#125;&#125;</code> as placeholders.</div>
+                            </div>
+                            <div class="col-sm-3">
+                                <label class="form-label">HTTP Method</label>
+                                <select name="sms_method" class="form-select">
+                                    <option value="POST" {{ old('sms_method', $smsMethod) === 'POST' ? 'selected' : '' }}>POST</option>
+                                    <option value="GET"  {{ old('sms_method', $smsMethod) === 'GET'  ? 'selected' : '' }}>GET</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Authentication --}}
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-shield-lock me-1"></i> Authentication
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Auth Type</label>
+                            <select name="sms_auth_type" class="form-select" id="sms_auth_type">
+                                <option value="none"   {{ old('sms_auth_type', $smsAuthType) === 'none'   ? 'selected' : '' }}>None</option>
+                                <option value="bearer" {{ old('sms_auth_type', $smsAuthType) === 'bearer' ? 'selected' : '' }}>Bearer Token</option>
+                                <option value="basic"  {{ old('sms_auth_type', $smsAuthType) === 'basic'  ? 'selected' : '' }}>Basic Auth</option>
+                                <option value="apikey" {{ old('sms_auth_type', $smsAuthType) === 'apikey' ? 'selected' : '' }}>API Key Header</option>
+                            </select>
+                        </div>
+
+                        {{-- Bearer --}}
+                        <div id="sms-auth-bearer" class="{{ old('sms_auth_type', $smsAuthType) === 'bearer' ? '' : 'd-none' }}">
+                            <label class="form-label">Bearer Token</label>
+                            <div class="input-group">
+                                <input type="password" name="sms_bearer_token" class="form-control" id="sms-bearer-input"
+                                       placeholder="{{ $smsBearerTokenSet ? '(saved — leave blank to keep)' : 'Enter token' }}">
+                                <button type="button" class="btn btn-outline-secondary"
+                                        onclick="const i=document.getElementById('sms-bearer-input');i.type=i.type==='password'?'text':'password'">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Basic --}}
+                        <div id="sms-auth-basic" class="{{ old('sms_auth_type', $smsAuthType) === 'basic' ? '' : 'd-none' }}">
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" name="sms_basic_username" class="form-control"
+                                           value="{{ old('sms_basic_username', Settings::get('sms_basic_username', '')) }}">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label">Password</label>
+                                    <input type="password" name="sms_basic_password" class="form-control"
+                                           placeholder="(saved — leave blank to keep)">
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- API Key --}}
+                        <div id="sms-auth-apikey" class="{{ old('sms_auth_type', $smsAuthType) === 'apikey' ? '' : 'd-none' }}">
+                            <div class="row g-3">
+                                <div class="col-sm-5">
+                                    <label class="form-label">Header Name</label>
+                                    <input type="text" name="sms_apikey_header" class="form-control"
+                                           value="{{ old('sms_apikey_header', Settings::get('sms_apikey_header', 'X-API-Key')) }}"
+                                           placeholder="X-API-Key">
+                                </div>
+                                <div class="col-sm-7">
+                                    <label class="form-label">API Key Value</label>
+                                    <input type="password" name="sms_apikey_value" class="form-control"
+                                           placeholder="(saved — leave blank to keep)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Body template --}}
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-code-square me-1"></i> Request Body Template
+                        <span class="text-muted fw-normal small ms-2">Leave blank for GET requests or APIs that use URL params.</span>
+                    </div>
+                    <div class="card-body">
+                        <textarea name="sms_body_template" class="form-control font-monospace" rows="5"
+                                  placeholder='{"to":"{{to}}","from":"{{from}}","message":"{{message}}"}'>{{ old('sms_body_template', $smsBodyTemplate) }}</textarea>
+                        <div class="form-text">JSON or plain-text body sent with POST requests. Placeholders: <code>&#123;&#123;to&#125;&#125;</code> <code>&#123;&#123;from&#125;&#125;</code> <code>&#123;&#123;message&#125;&#125;</code>.</div>
+                    </div>
+                </div>
+
+                {{-- Recipients --}}
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-people me-1"></i> SMS Recipients
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label">Phone numbers (E.164 format)</label>
+                        <textarea name="sms_recipients" class="form-control" rows="2"
+                                  placeholder="+9607712345, +9609876543">{{ old('sms_recipients', $smsRecipients) }}</textarea>
+                        <div class="form-text">Comma or newline separated. Use E.164 format (+9607...).</div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-floppy me-1"></i> Save SMS settings
+                </button>
+            </div>
+
+            {{-- Sidebar: test --}}
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-send me-1"></i> Send test SMS
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label">Phone number</label>
+                        <input type="tel" id="test-sms-phone" class="form-control mb-2"
+                               placeholder="+9607712345">
+                        <button type="button" id="btn-test-sms" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-phone me-1"></i> Send test SMS
+                        </button>
+                        <div id="sms-test-result" class="mt-2" hidden></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
 </div>{{-- /tab-content --}}
 
 @push('scripts')
@@ -631,6 +847,25 @@ ajaxTest('btn-test-wa', 'wa-test-result', '{{ route('settings.whatsapp.test') }}
 
 ajaxTest('btn-test-conn', 'conn-test-result', '{{ route('settings.connection.test') }}',
     () => ({}));
+
+ajaxTest('btn-test-sms', 'sms-test-result', '{{ route('settings.sms.test') }}',
+    () => ({ test_phone: document.getElementById('test-sms-phone').value }));
+
+// Auth type toggle for SMS tab
+(function () {
+    const sel = document.getElementById('sms_auth_type');
+    if (! sel) return;
+    const panels = {
+        bearer: document.getElementById('sms-auth-bearer'),
+        basic:  document.getElementById('sms-auth-basic'),
+        apikey: document.getElementById('sms-auth-apikey'),
+    };
+    function show(val) {
+        Object.entries(panels).forEach(([k, el]) => el && el.classList.toggle('d-none', k !== val));
+    }
+    sel.addEventListener('change', () => show(sel.value));
+    show(sel.value);
+})();
 </script>
 @endpush
 @endsection

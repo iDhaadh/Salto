@@ -55,6 +55,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/whatsapp/test', [SettingsController::class, 'testWhatsApp'])->name('settings.whatsapp.test');
         Route::put('/settings/connection', [SettingsController::class, 'updateConnection'])->name('settings.connection.update');
         Route::post('/settings/connection/test', [SettingsController::class, 'testConnection'])->name('settings.connection.test');
+        Route::put('/settings/sms', [SettingsController::class, 'updateSms'])->name('settings.sms.update');
+        Route::post('/settings/sms/test', [SettingsController::class, 'testSms'])->name('settings.sms.test');
         Route::post('/settings/test', [SettingsController::class, 'test'])->name('settings.test');
 
         Route::resource('users', UserController::class)->except(['show']);

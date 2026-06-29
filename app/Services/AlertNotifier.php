@@ -34,6 +34,13 @@ class AlertNotifier
             }
         }
 
+        if (Settings::smsEnabled()) {
+            foreach (Settings::smsRecipients() as $number) {
+                SendBatteryAlert::dispatch($lock, $status, 'sms', $number, $reason, $alert?->id);
+                $count++;
+            }
+        }
+
         return $count;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AlertNotifier;
+use App\Services\SmsService;
 use App\Services\WhatsAppService;
 use App\Support\BatteryStatus;
 use App\Support\LockSnapshot;
@@ -34,6 +35,17 @@ class SettingsController extends Controller
             'waConfigured'     => Settings::get('wa_token') !== null && (bool) Settings::get('wa_phone_id'),
             'saltoConfigured'  => (bool) Settings::get('salto_host'),
             'saltoMonitoringEnabled' => Settings::saltoMonitoringEnabled(),
+            'smsConfigured'    => Settings::smsConfigured(),
+            // SMS
+            'smsEnabled'         => Settings::smsEnabled(),
+            'smsProviderName'    => Settings::smsProviderName(),
+            'smsSenderId'        => Settings::smsSenderId(),
+            'smsEndpoint'        => Settings::smsEndpoint(),
+            'smsMethod'          => Settings::smsMethod(),
+            'smsAuthType'        => Settings::smsAuthType(),
+            'smsBearerTokenSet'  => Settings::smsBearerTokenSet(),
+            'smsBodyTemplate'    => Settings::smsBodyTemplate(),
+            'smsRecipients'      => implode(', ', Settings::smsRecipients()),
             // Email / SMTP
             'smtpHost'         => Settings::smtpHost(),
             'smtpPort'         => Settings::smtpPort(),
@@ -332,6 +344,71 @@ class SettingsController extends Controller
             return response()->json(['ok' => false, 'message' => $e->getMessage()]);
         }
     }
+
+    // ── SMS ───────────────────────────────────────────────────────────────────
+
+    public function updateSms(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'sms_provider_name' => ['nullable', 'string', 'max:128'],
+            'sms_sender_id'     => ['nullable', 'string', 'max:64'],
+            'sms_endpoint'      => ['required', 'url', 'max:512'],
+            'sms_method'        => ['required', 'in:GET,POST'],
+            'sms_auth_type'     => ['required', 'in:none,bearer,basic,apikey'],
+            'sms_bearer_token'  => ['nullable', 'string'],
+            'sms_basic_username'=> ['nullable', 'string', 'max:255'],
+            'sms_basic_password'=> ['nullable', 'string'],
+            'sms_apikey_header' => ['nullable', 'string', 'max:128'],
+            'sms_apikey_value'  => ['nullable', 'string'],
+            'sms_body_template' => ['nullable', 'string'],
+            'sms_recipients'    => ['nullable', 'string'],
+        ]);
+
+        Settings::put('sms_enabled',       $request->boolean('sms_enabled') ? 1 : 0);
+        Settings::put('sms_provider_name', $data['sms_provider_name'] ?? '');
+        Settings::put('sms_sender_id',     $data['sms_sender_id'] ?? '');
+        Settings::put('sms_endpoint',      $data['sms_endpoint']);
+        Settings::put('sms_method',        $data['sms_method']);
+        Settings::put('sms_auth_type',     $data['sms_auth_type']);
+        Settings::put('sms_basic_username',$data['sms_basic_username'] ?? '');
+        Settings::put('sms_apikey_header', $data['sms_apikey_header'] ?? 'X-API-Key');
+        Settings::put('sms_body_template', $data['sms_body_template'] ?? '');
+        Settings::put('sms_recipients',    $data['sms_recipients'] ?? '');
+
+        if (filled($data['sms_bearer_token'] ?? null)) {
+            Settings::put('sms_bearer_token', $data['sms_bearer_token']);
+        }
+        if (filled($data['sms_basic_password'] ?? null)) {
+            Settings::put('sms_basic_password', $data['sms_basic_password']);
+        }
+        if (filled($data['sms_apikey_value'] ?? null)) {
+            Settings::put('sms_apikey_value', $data['sms_apikey_value']);
+        }
+
+        return redirect()->route('settings.edit')
+            ->with('status', 'SMS settings saved.')
+            ->with('active_tab', 'sms');
+    }
+
+    public function testSms(Request $request, SmsService $sms): JsonResponse
+    {
+        $to = trim((string) $request->input('test_phone'));
+        if (! $to) {
+            return response()->json(['ok' => false, 'message' => 'Enter a phone number in E.164 format (e.g. +9607712345).']);
+        }
+
+        if (! Settings::smsEndpoint()) {
+            return response()->json(['ok' => false, 'message' => 'No SMS endpoint configured. Save the settings first.']);
+        }
+
+        $result = $sms->send($to, 'SALTO Battery Monitor — this is a test message.');
+
+        return $result['ok']
+            ? response()->json(['ok' => true, 'message' => "Test SMS sent to {$to}."])
+            : response()->json(['ok' => false, 'message' => $result['error'] ?? 'Unknown error.']);
+    }
+
+    // ── Test all channels ──────────────────────────────────────────────────────
 
     public function test(AlertNotifier $notifier): RedirectResponse
     {

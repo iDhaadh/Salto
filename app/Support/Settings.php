@@ -90,6 +90,27 @@ class Settings
     public static function waAppSecretSet(): bool    { return self::get('wa_app_secret') !== null; }
     public static function waWebhookUrl(): string    { return (string) self::get('wa_webhook_url', env('APP_URL', '') . '/api/whatsapp/webhook'); }
 
+    // ── SMS ──────────────────────────────────────────────────────────────────
+    public static function smsEnabled(): bool
+    {
+        return (bool) (int) self::get('sms_enabled', 0);
+    }
+
+    /** @return array<int,string> */
+    public static function smsRecipients(): array
+    {
+        return self::splitList(self::get('sms_recipients', ''));
+    }
+
+    public static function smsEndpoint(): string    { return (string) self::get('sms_endpoint',      ''); }
+    public static function smsMethod(): string      { return (string) self::get('sms_method',        'POST'); }
+    public static function smsAuthType(): string    { return (string) self::get('sms_auth_type',     'none'); }
+    public static function smsSenderId(): string    { return (string) self::get('sms_sender_id',     ''); }
+    public static function smsProviderName(): string{ return (string) self::get('sms_provider_name', ''); }
+    public static function smsBodyTemplate(): string{ return (string) self::get('sms_body_template', ''); }
+    public static function smsBearerTokenSet(): bool{ return filled(self::get('sms_bearer_token')); }
+    public static function smsConfigured(): bool    { return filled(self::get('sms_endpoint')); }
+
     // ── SALTO MS SQL ─────────────────────────────────────────────────────────
     public static function saltoHost(): string
     {

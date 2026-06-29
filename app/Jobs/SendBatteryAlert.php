@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\BatteryAlertMail;
 use App\Models\NotificationLog;
+use App\Services\SmsService;
 use App\Services\WhatsAppService;
 use App\Support\BatteryStatus;
 use App\Support\LockSnapshot;
@@ -32,7 +33,7 @@ class SendBatteryAlert implements ShouldQueue
     ) {
     }
 
-    public function handle(WhatsAppService $whatsapp): void
+    public function handle(WhatsAppService $whatsapp, SmsService $sms): void
     {
         $channel = $this->channel;
         $error = null;
@@ -46,6 +47,13 @@ class SendBatteryAlert implements ShouldQueue
             } elseif ($channel === 'whatsapp') {
                 $result = $whatsapp->sendBatteryAlert($this->recipient, $this->lock, $this->status, $this->reason, $this->alertId);
                 $payload = $result['payload'] ?? null;
+                if (! $result['ok']) {
+                    $error = $result['error'];
+                }
+            } elseif ($channel === 'sms') {
+                $label   = ucfirst($this->status->value);
+                $message = "SALTO Alert: {$this->lock->name} battery is {$label}. Location: {$this->lock->location}. Time: {$this->lock->lastSeenAt->format('d/m/Y H:i')}";
+                $result  = $sms->send($this->recipient, $message);
                 if (! $result['ok']) {
                     $error = $result['error'];
                 }
