@@ -723,7 +723,7 @@
                                 <div class="col-sm-6">
                                     <label class="form-label">Username</label>
                                     <input type="text" name="sms_basic_username" class="form-control"
-                                           value="{{ old('sms_basic_username', Settings::get('sms_basic_username', '')) }}">
+                                           value="{{ old('sms_basic_username', $smsBasicUsername) }}">
                                 </div>
                                 <div class="col-sm-6">
                                     <label class="form-label">Password</label>
@@ -739,7 +739,7 @@
                                 <div class="col-sm-5">
                                     <label class="form-label">Header Name</label>
                                     <input type="text" name="sms_apikey_header" class="form-control"
-                                           value="{{ old('sms_apikey_header', Settings::get('sms_apikey_header', 'X-API-Key')) }}"
+                                           value="{{ old('sms_apikey_header', $smsApiKeyHeader) }}"
                                            placeholder="X-API-Key">
                                 </div>
                                 <div class="col-sm-7">

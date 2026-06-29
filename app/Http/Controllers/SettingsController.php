@@ -46,6 +46,8 @@ class SettingsController extends Controller
             'smsBearerTokenSet'  => Settings::smsBearerTokenSet(),
             'smsBodyTemplate'    => Settings::smsBodyTemplate(),
             'smsRecipients'      => implode(', ', Settings::smsRecipients()),
+            'smsBasicUsername'   => (string) Settings::get('sms_basic_username', ''),
+            'smsApiKeyHeader'    => (string) Settings::get('sms_apikey_header', 'X-API-Key'),
             // Email / SMTP
             'smtpHost'         => Settings::smtpHost(),
             'smtpPort'         => Settings::smtpPort(),
