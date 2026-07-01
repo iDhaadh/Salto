@@ -21,7 +21,6 @@ class BatteryMonitor
     public function __construct(
         private readonly SaltoLockRepository $repository,
         private readonly AlertNotifier $notifier,
-        private readonly SaltoApiService $api,
     ) {
     }
 
@@ -34,16 +33,9 @@ class BatteryMonitor
     {
         $readings = $this->repository->all();
 
-        // Merge real-time API battery status for online RF3 locks.
-        // Falls back to DB value if API is unavailable or lock is offline.
-        // If the API has no reading (BatteryStatus=0) and the DB data is older
-        // than 30 days, treat the battery as Unknown to avoid re-triggering
-        // alerts from stale readings the lock hasn't refreshed in months.
-        $apiBattery = $this->api->getOnlineBatteryStatuses();
-        $readings = $readings->map(function ($reading) use ($apiBattery) {
-            if (isset($apiBattery[$reading->saltoId])) {
-                return $reading->withBattery($apiBattery[$reading->saltoId]);
-            }
+        // If a lock's last_seen is older than 30 days and it has an alertable
+        // battery status, mark it Unknown so stale alerts auto-resolve.
+        $readings = $readings->map(function ($reading) {
             if ($reading->battery->isAlertable()
                 && $reading->lastSeenAt
                 && $reading->lastSeenAt->isBefore(now()->subDays(30))) {
