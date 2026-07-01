@@ -71,8 +71,8 @@ class SaltoLockRepository
 
         $sql = "SELECT l.{$id} AS [id], l.{$name} AS [name], l.{$loc} AS [location],
             CASE WHEN l.{$bat} = 255 THEN 'unknown'
-                 WHEN l.{$bat} >= 40  THEN 'normal'
-                 WHEN l.{$bat} >= 20  THEN 'low'
+                 WHEN l.{$bat} >= 60  THEN 'normal'
+                 WHEN l.{$bat} > 0    THEN 'low'
                  ELSE 'flat' END AS [battery],
             (SELECT TOP 1 a.EventDateTime FROM [tb_LockAuditTrail] a
              WHERE a.id_object = l.{$id} ORDER BY a.InsertionCounter DESC) AS [last_seen]
