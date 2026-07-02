@@ -97,13 +97,22 @@ class SaltoApiService
     }
 
     /**
-     * Returns real-time battery status for all online RF3 locks.
+     * Returns real-time battery status for all online RF3 locks — the same
+     * data source SALTO Space's Online Monitoring page uses.
      *
-     * Key = SALTO DB lock id (tb_Locks.id_lock, same as AttachedAccessPointId).
-     * Value = BatteryStatus enum derived from the API's BatteryStatus field:
-     *   0 → Low, 1 → Normal, 2 → Flat, other → null (skip, keep DB value).
+     * GetOnlineAccessPointStatus must be queried with AttachedAccessPointId
+     * (= tb_Locks.id_lock), NOT the online access-point Id. Querying with the
+     * wrong id silently returns all-zero (UNKNOWN) statuses. The webapp also
+     * batches requests in chunks of 20, which we mirror here.
      *
-     * Returns empty array on any API failure so the DB fallback is used.
+     * BatteryStatus enum (from the SALTO Space JS bundle):
+     *   0 = UNKNOWN  → skip, keep DB value
+     *   1 = NORMAL
+     *   2 = LOW
+     *   3 = RUNOUT (flat/dead)
+     *
+     * Key = SALTO DB lock id. Returns empty array on any API failure so the
+     * DB fallback is used.
      *
      * @return array<string, BatteryStatus>
      */
@@ -119,44 +128,32 @@ class SaltoApiService
                 return [];
             }
 
-            // Build maps: online_ap_id → db_lock_id  AND  online_ap_id list
-            $apIds       = [];
-            $apToLockId  = [];
+            $lockIds = [];
             foreach ($doors as $door) {
-                $apId   = (int) ($door['Id'] ?? 0);
-                $lockId = (string) ($door['AttachedAccessPointId'] ?? '');
-                if ($apId && $lockId !== '') {
-                    $apIds[]            = $apId;
-                    $apToLockId[$apId]  = $lockId;
+                $lockId = (int) ($door['AttachedAccessPointId'] ?? 0);
+                if ($lockId) {
+                    $lockIds[] = $lockId;
                 }
             }
 
-            if (empty($apIds)) {
+            if (empty($lockIds)) {
                 return [];
             }
 
-            $statuses = $this->rpc('GetOnlineAccessPointStatus', ['accessPointIdList' => $apIds]);
-            if (! is_array($statuses)) {
-                return [];
-            }
-
-            // API BatteryStatus values from GetOnlineAccessPointStatus:
-            //   0 = Normal/OK (no battery issue — real-time from the lock)
-            //   1 = Normal/OK (alternative normal signal level)
-            //   2 = Normal/OK
-            //   3 = Low warning
-            //   4+ = Flat/Dead (critical)
-            // BatteryStatus=0 is NOT "no reading" — it IS a real-time normal status.
-            // The DB Battery column lags behind physical battery changes; the API is authoritative.
-            $map = [0 => BatteryStatus::Normal, 1 => BatteryStatus::Normal, 2 => BatteryStatus::Normal, 3 => BatteryStatus::Low, 4 => BatteryStatus::Flat];
+            $map = [1 => BatteryStatus::Normal, 2 => BatteryStatus::Low, 3 => BatteryStatus::Flat];
 
             $result = [];
-            foreach ($statuses as $s) {
-                $apId   = (int) ($s['AccessPointId'] ?? 0);
-                $apiVal = $s['BatteryStatus'] ?? null;
-                $lockId = $apToLockId[$apId] ?? null;
-                if ($lockId !== null && isset($map[$apiVal])) {
-                    $result[$lockId] = $map[$apiVal];
+            foreach (array_chunk($lockIds, 20) as $chunk) {
+                $statuses = $this->rpc('GetOnlineAccessPointStatus', ['accessPointIdList' => $chunk]);
+                if (! is_array($statuses)) {
+                    continue;
+                }
+                foreach ($statuses as $s) {
+                    $lockId = (int) ($s['AccessPointId'] ?? 0);
+                    $apiVal = $s['BatteryStatus'] ?? null;
+                    if ($lockId && isset($map[$apiVal])) {
+                        $result[(string) $lockId] = $map[$apiVal];
+                    }
                 }
             }
 

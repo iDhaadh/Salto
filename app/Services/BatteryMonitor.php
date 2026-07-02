@@ -21,6 +21,7 @@ class BatteryMonitor
     public function __construct(
         private readonly SaltoLockRepository $repository,
         private readonly AlertNotifier $notifier,
+        private readonly SaltoApiService $api,
     ) {
     }
 
@@ -33,12 +34,22 @@ class BatteryMonitor
     {
         $readings = $this->repository->all();
 
-        // If a lock's last_seen is older than 30 days and it has an alertable
-        // battery status, mark it Unknown so stale alerts auto-resolve.
-        $readings = $readings->map(function ($reading) {
-            if ($reading->battery->isAlertable()
-                && $reading->lastSeenAt
-                && $reading->lastSeenAt->isBefore(now()->subDays(30))) {
+        // Real-time battery status from the SALTO API — the same source the
+        // Online Monitoring page uses. Authoritative for online locks: the DB
+        // Battery column lags behind physical battery replacements.
+        //
+        // Offline locks (no real-time channel) keep their DB value only while
+        // the lock has been seen within the last 30 days — offline locks report
+        // battery via card SVN data / PPD sync, so a recent last_seen means the
+        // DB reading is current. Beyond that the reading is unverifiable and is
+        // shown as Unknown (a 16-month-old "Normal" is not a status).
+        $apiBattery = $this->api->getOnlineBatteryStatuses();
+        $readings = $readings->map(function ($reading) use ($apiBattery) {
+            if (isset($apiBattery[$reading->saltoId])) {
+                return $reading->withBattery($apiBattery[$reading->saltoId]);
+            }
+            if ($reading->lastSeenAt === null
+                || $reading->lastSeenAt->isBefore(now()->subDays(30))) {
                 return $reading->withBattery(BatteryStatus::Unknown);
             }
             return $reading;
