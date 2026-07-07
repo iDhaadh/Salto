@@ -45,10 +45,10 @@
     <div class="col-6 col-md-4">
         <div class="card stat-card">
             <div class="card-body d-flex align-items-center gap-3">
-                <div class="stat-icon text-warning"><i class="bi bi-credit-card-2-front"></i></div>
+                <div class="stat-icon text-danger"><i class="bi bi-exclamation-triangle"></i></div>
                 <div>
-                    <div class="stat-value text-warning">{{ number_format($accessCount) }}</div>
-                    <div class="stat-label text-muted">Card Access</div>
+                    <div class="stat-value text-danger">{{ number_format($alarmCount) }}</div>
+                    <div class="stat-label text-muted">Alarms (24h)</div>
                 </div>
             </div>
         </div>
@@ -201,15 +201,21 @@
                                         $badgeClass = $isOnline ? 'bg-primary' : match($row['category']) {
                                             'access'  => 'bg-success',
                                             'denied'  => 'bg-danger',
+                                            'alarm'   => 'bg-danger',
                                             'battery' => 'bg-warning text-dark',
+                                            'privacy' => 'bg-info text-dark',
                                             'door'    => 'bg-primary',
+                                            'comm'    => 'bg-dark',
                                             default   => 'bg-secondary',
                                         };
                                         $icon = $isOnline ? 'bi-unlock' : match($row['category']) {
                                             'access'  => 'bi-check-circle',
                                             'denied'  => 'bi-x-circle',
+                                            'alarm'   => 'bi-exclamation-triangle-fill',
                                             'battery' => 'bi-battery-half',
+                                            'privacy' => 'bi-shield-lock',
                                             'door'    => 'bi-door-open',
+                                            'comm'    => 'bi-wifi-off',
                                             default   => 'bi-gear',
                                         };
                                     @endphp

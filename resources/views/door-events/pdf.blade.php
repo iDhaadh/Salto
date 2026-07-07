@@ -16,8 +16,11 @@
         .badge { display: inline-block; padding: 1.5px 4px; border-radius: 2px; font-size: 7px; font-weight: bold; }
         .access  { background: #dcfce7; color: #15803d; }
         .denied  { background: #fee2e2; color: #dc2626; }
+        .alarm   { background: #fee2e2; color: #b91c1c; }
         .battery { background: #fef3c7; color: #d97706; }
+        .privacy { background: #cffafe; color: #0e7490; }
         .door    { background: #dbeafe; color: #1d4ed8; }
+        .comm    { background: #e2e8f0; color: #1e293b; }
         .system  { background: #f1f5f9; color: #475569; }
         .mono { font-family: monospace; }
         .footer { margin-top: 8px; text-align: center; font-size: 7px; color: #94a3b8; }

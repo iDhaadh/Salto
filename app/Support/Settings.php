@@ -147,6 +147,11 @@ class Settings
         return (bool) (int) self::get('salto_monitoring_enabled', 1);
     }
 
+    public static function alarmMonitoringEnabled(): bool
+    {
+        return (bool) (int) self::get('alarm_monitoring_enabled', (int) config('alarms.enabled', true));
+    }
+
     public static function saltoTrustCert(): bool
     {
         return filter_var(self::get('salto_trust_cert', env('SALTO_DB_TRUST_CERT', 'true')), FILTER_VALIDATE_BOOLEAN);

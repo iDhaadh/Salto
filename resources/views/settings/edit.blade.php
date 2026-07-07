@@ -114,6 +114,15 @@
                                     <label class="form-check-label" for="recov">Notify when a battery recovers to normal</label>
                                 </div>
                             </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="alarm_monitoring_enabled"
+                                           id="alarm_mon" {{ $alarmMonitoringEnabled ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="alarm_mon">
+                                        Send alarm alerts (intrusion, tamper, forced entry, duress, door left open, hardware failure)
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <h2 class="h6 text-uppercase text-muted">Email recipients</h2>
@@ -420,6 +429,29 @@
                                        placeholder="en">
                                 @error('wa_template_locale')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header fw-semibold">
+                        <i class="bi bi-exclamation-triangle me-1"></i> Alarm templates
+                        <span class="text-muted fw-normal small ms-2">One per SALTO alarm condition. Each uses @{{1}} room, @{{2}} location, @{{3}} date-time.</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            @foreach($alarmTemplates as $key => $tpl)
+                                <div class="col-sm-6">
+                                    <label class="form-label">Template — {{ $tpl['label'] }}</label>
+                                    <input type="text" name="wa_alarm_tpl[{{ $key }}]"
+                                           class="form-control"
+                                           value="{{ old('wa_alarm_tpl.'.$key, $tpl['value']) }}"
+                                           placeholder="{{ $tpl['default'] }}">
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="bi bi-info-circle me-1"></i>Create these in Meta Business Manager (Category: Utility). Alarms deliver automatically once each template is approved.
                         </div>
                     </div>
                 </div>

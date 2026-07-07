@@ -14,42 +14,129 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class DoorEventController extends Controller
 {
-    // SALTO EventCode → [label, category]
-    // category: access | denied | battery | door | system
+    // SALTO EventCode → [label, category]. Sourced from SALTO Space's own
+    // operation catalog (GetEventStreamOperationIdAndNameAndIsExitList), not
+    // guessed — labels match exactly what SALTO Space displays.
+    // category: access | denied | alarm | battery | privacy | door | comm | system
     private const EVENT_CODES = [
-        17  => ['Access Granted',          'access'],
-        25  => ['Access Granted (Emergency)','access'],
-        28  => ['Access Granted (Keypad)', 'access'],
-        40  => ['Door Closed',             'door'],
-        41  => ['Inside Handle Opened',    'door'],
-        49  => ['Office Mode ON',          'system'],
-        50  => ['Office Mode OFF',         'system'],
-        52  => ['Auto-open Mode',          'system'],
-        55  => ['Access Denied (Unknown Key)', 'denied'],
-        56  => ['Access Denied (Expired)', 'denied'],
-        57  => ['Access Denied (Cancelled)','denied'],
-        60  => ['Key Programmed',          'system'],
-        64  => ['Key Updated',             'system'],
-        72  => ['Free Passage ON',         'system'],
-        81  => ['Deadbolt Released',       'door'],
-        82  => ['Battery Low',             'battery'],
-        84  => ['Battery Very Low',        'battery'],
-        87  => ['Locked by Keypad',        'door'],
-        88  => ['Locked',                  'door'],
-        89  => ['Unlocked by Keypad',      'door'],
-        96  => ['Emergency Unlock',        'access'],
-        99  => ['Timeout',                 'system'],
-        100 => ['Privacy Mode ON',         'system'],
-        104 => ['Privacy Mode OFF',        'system'],
-        113 => ['Auto-open (Inside)',      'door'],
-        114 => ['Auto-close',              'door'],
-        115 => ['Auto-unlock',             'door'],
-        116 => ['Auto-open',               'door'],
-        117 => ['Key Update (PPD)',        'system'],
-        119 => ['Inhibit Mode ON',         'system'],
-        120 => ['Dormant Mode',            'system'],
-        1000 => ['Low Battery Alert',      'battery'],
-        1001 => ['Flat Battery Alert',     'battery'],
+        // ── Access granted (door opened) ──────────────────────────────
+        8   => ['New Renovation Code (Online)',      'system'],
+        16  => ['Door Opened (Inside Handle)',       'access'],
+        17  => ['Door Opened (Key)',                 'access'],
+        18  => ['Door Opened (Key + Keypad)',        'access'],
+        19  => ['Door Opened (Multiple Guest Key)',  'access'],
+        20  => ['Door Opened (Unique Opening)',      'access'],
+        21  => ['Door Opened (Switch)',              'access'],
+        22  => ['Door Opened (Metal Key)',           'access'],
+        23  => ['First Double-Key Read',             'access'],
+        24  => ['Door Opened (Second Double Key)',   'access'],
+        25  => ['Door Opened (PPD)',                 'access'],
+        26  => ['Door Opened (Keypad)',              'access'],
+        27  => ['Door Opened (Spare Key)',           'access'],
+        28  => ['Door Opened (Online)',              'access'],
+        29  => ['Door Opened (Key + PIN)',           'access'],
+        43  => ['Door Opened (Fingerprint + Key)',   'access'],
+        45  => ['Door Opened (PIN + Fingerprint)',   'access'],
+        2000 => ['Guest New Key',                    'access'],
+        2001 => ['Guest Copy Key',                   'access'],
+
+        // ── Door / lock state ─────────────────────────────────────────
+        33  => ['Door Closed (Key)',                 'door'],
+        34  => ['Door Closed (Key + Keypad)',        'door'],
+        35  => ['Door Closed (Keypad)',              'door'],
+        36  => ['Door Closed (Switch)',              'door'],
+        37  => ['Key Inserted (Energy Saver)',       'door'],
+        38  => ['Key Removed (Energy Saver)',        'door'],
+        39  => ['Room Prepared (Energy Saver)',      'door'],
+        44  => ['Door Closed (Fingerprint + Key)',   'door'],
+        46  => ['Door Closed (PIN + Fingerprint)',   'door'],
+        52  => ['Locked',                            'door'],
+        53  => ['Unlocked',                          'door'],
+        121 => ['Bolt Thrown (Out)',                 'door'],
+        122 => ['Bolt Retracted (Inside)',           'door'],
+        123 => ['Locker Taken',                      'door'],
+        125 => ['Locker Released',                   'door'],
+
+        // ── Privacy ───────────────────────────────────────────────────
+        40  => ['Privacy Started',                   'privacy'],
+        41  => ['Privacy Ended',                     'privacy'],
+
+        // ── Alarms / fault conditions ─────────────────────────────────
+        3   => ['Short-Circuit in Input',            'alarm'],
+        4   => ['Open-Circuit in Input',             'alarm'],
+        42  => ['DURESS Alarm',                      'alarm'],
+        56  => ['Forced Opening Started',            'alarm'],
+        57  => ['Forced Opening Ended',              'alarm'],
+        58  => ['Forced Closing Started',            'alarm'],
+        59  => ['Forced Closing Ended',              'alarm'],
+        60  => ['Intrusion Alarm',                   'alarm'],
+        61  => ['Tamper Alarm',                      'alarm'],
+        62  => ['Door Left Open',                    'alarm'],
+        63  => ['Door Left Open — Cleared',          'alarm'],
+        64  => ['Intrusion Alarm — Cleared',         'alarm'],
+        67  => ['Tamper Alarm — Cleared',            'alarm'],
+        119 => ['Hardware Failure (Open/Close)',     'alarm'],
+
+        // ── Battery ───────────────────────────────────────────────────
+        100 => ['Denied — Battery Flat',             'battery'],
+        115 => ['Low Battery Level',                 'battery'],
+
+        // ── Access denied ─────────────────────────────────────────────
+        81  => ['Denied — Key Not Activated',        'denied'],
+        82  => ['Denied — Key Expired',              'denied'],
+        83  => ['Denied — Key Out of Date',          'denied'],
+        84  => ['Denied — Invalid Key',              'denied'],
+        85  => ['Denied — Out of Time Schedule',     'denied'],
+        87  => ['Denied — Privacy Not Overridden',   'denied'],
+        88  => ['Denied — Old Guest Key',            'denied'],
+        89  => ['Denied — Guest Key Cancelled',      'denied'],
+        90  => ['Denied — Antipassback',             'denied'],
+        91  => ['Denied — Second Double Key Missing','denied'],
+        92  => ['Denied — No Authorization',         'denied'],
+        93  => ['Denied — Invalid PIN',              'denied'],
+        94  => ['Denied — Not Enough Points',        'denied'],
+        95  => ['Denied — Door in Emergency State',  'denied'],
+        96  => ['Denied — Key Cancelled',            'denied'],
+        97  => ['Denied — Unique Key Already Used',  'denied'],
+        98  => ['Denied — Incompatible Renovation',  'denied'],
+        101 => ['Denied — Cannot Audit Opening',     'denied'],
+        102 => ['Denied — Locker Occupancy Timeout', 'denied'],
+        103 => ['Denied — Refused by Host',          'denied'],
+        107 => ['Denied — Key Data Manipulated',     'denied'],
+        108 => ['Denied — Invalid Fingerprint',      'denied'],
+
+        // ── Communication ─────────────────────────────────────────────
+        47   => ['Reader Communication Lost',        'comm'],
+        48   => ['Reader Communication Restored',    'comm'],
+        79   => ['Server Communication Lost',        'comm'],
+        80   => ['Server Communication Restored',    'comm'],
+        1000 => ['Device Communication Restored',    'comm'],
+        1001 => ['Device Communication Lost',        'comm'],
+
+        // ── System / maintenance ──────────────────────────────────────
+        31  => ['Office Mode ON (Keypad)',           'system'],
+        32  => ['Office Mode OFF (Keypad)',          'system'],
+        49  => ['Office Mode ON',                    'system'],
+        50  => ['Office Mode OFF',                   'system'],
+        51  => ['Guest Cancelled',                   'system'],
+        54  => ['Door Programmed (Spare Key)',       'system'],
+        55  => ['New Hotel Guest Key',               'system'],
+        65  => ['Office Mode ON (Online)',           'system'],
+        66  => ['Office Mode OFF (Online)',          'system'],
+        69  => ['Key Updated (Out of Site)',         'system'],
+        70  => ['Key Expiry Extended (Offline)',     'system'],
+        72  => ['Online Peripheral Updated',         'system'],
+        76  => ['Key Updated (Online)',              'system'],
+        78  => ['Key Cancelled (Online)',            'system'],
+        99  => ['Warning — Key Not Fully Updated',   'system'],
+        104 => ['Key Deleted',                       'system'],
+        112 => ['New Renovation Code (Door)',        'system'],
+        113 => ['PPD Connection',                    'system'],
+        114 => ['Daylight Saving Time Change',       'system'],
+        116 => ['Incorrect Clock Value',             'system'],
+        117 => ['RF Lock Date/Time Updated',         'system'],
+        118 => ['RF Lock Updated',                   'system'],
+        120 => ['Lock Restarted',                    'system'],
     ];
 
     private const BASE_SELECT = "
@@ -141,17 +228,24 @@ class DoorEventController extends Controller
         );
 
         $eventCodes = self::EVENT_CODES;
-        $categories = ['access', 'denied', 'door', 'battery', 'system'];
+        $categories = ['access', 'denied', 'alarm', 'battery', 'privacy', 'door', 'comm', 'system'];
 
         $baseCount = "SELECT COUNT(*) AS c FROM [tb_LockAuditTrail] a LEFT JOIN [tb_Locks] l ON a.id_object = l.id_lock LEFT JOIN [tb_Users] u ON a.id_subject = u.id_user WHERE 1=1";
         $totalCount  = DB::connection('salto')->selectOne("{$baseCount}")->c ?? 0;
         $todayCount  = DB::connection('salto')->selectOne("{$baseCount} AND CAST(a.EventDateTime AS DATE) = CAST(GETDATE() AS DATE)")->c ?? 0;
-        $accessCount = DB::connection('salto')->selectOne("{$baseCount} AND a.EventCode = 17")->c ?? 0;
+
+        // Alarms & fault conditions (intrusion, tamper, forced, duress, low battery, etc.)
+        // in the last 24h — the operationally important events.
+        $alarmCodes = array_keys(array_filter(self::EVENT_CODES, fn ($e) => in_array($e[1], ['alarm', 'battery'])));
+        $alarmPlaceholders = implode(',', $alarmCodes);
+        $alarmCount = DB::connection('salto')->selectOne(
+            "{$baseCount} AND a.EventCode IN ({$alarmPlaceholders}) AND a.EventDateTime > DATEADD(day,-1,GETDATE())"
+        )->c ?? 0;
 
         // App-initiated remote opens (our own audit log).
         $appOpens = DoorOpen::with('user')->latest('opened_at')->limit(100)->get();
 
-        return view('door-events.index', compact('paginator', 'eventCodes', 'categories', 'totalCount', 'todayCount', 'accessCount', 'appOpens'));
+        return view('door-events.index', compact('paginator', 'eventCodes', 'categories', 'totalCount', 'todayCount', 'alarmCount', 'appOpens'));
     }
 
     public function exportPdf(Request $request)

@@ -26,6 +26,7 @@ class SettingsController extends Controller
             'pollMinutes'      => Settings::pollMinutes(),
             'reminderHours'    => Settings::reminderHours(),
             'notifyOnRecovery' => Settings::notifyOnRecovery(),
+            'alarmMonitoringEnabled' => Settings::alarmMonitoringEnabled(),
             'emailEnabled'     => Settings::emailEnabled(),
             'whatsappEnabled'  => Settings::whatsappEnabled(),
             'emails'           => implode(', ', Settings::emailRecipients()),
@@ -63,6 +64,14 @@ class SettingsController extends Controller
             'waTemplateFlat'   => Settings::waTemplateFlat(),
             'waTemplateNormal' => Settings::waTemplateNormal(),
             'waTemplateLocale' => Settings::waTemplateLocale(),
+            'alarmTemplates'   => collect(config('alarms.codes', []))->mapWithKeys(function ($e) {
+                [$key, $label, $tpl] = $e;
+                return [$key => [
+                    'label' => $label,
+                    'value' => (string) Settings::get("wa_alarm_tpl_{$key}", $tpl),
+                    'default' => $tpl,
+                ]];
+            })->all(),
             'waTokenSet'       => Settings::waTokenSet(),
             'waVerifyToken'    => Settings::waVerifyToken(),
             'waAppSecretSet'   => Settings::waAppSecretSet(),
@@ -102,6 +111,7 @@ class SettingsController extends Controller
         Settings::put('email_enabled', $request->boolean('email_enabled') ? 1 : 0);
         Settings::put('whatsapp_enabled', $request->boolean('whatsapp_enabled') ? 1 : 0);
         Settings::put('notify_on_recovery', $request->boolean('notify_on_recovery') ? 1 : 0);
+        Settings::put('alarm_monitoring_enabled', $request->boolean('alarm_monitoring_enabled') ? 1 : 0);
 
         return redirect()->route('settings.edit')
             ->with('status', 'Settings saved. Note: changing the poll interval takes effect after the next scheduler reload.');
@@ -189,6 +199,8 @@ class SettingsController extends Controller
             'wa_template_flat'   => ['required', 'string', 'max:128'],
             'wa_template_normal' => ['nullable', 'string', 'max:128'],
             'wa_template_locale' => ['required', 'string', 'max:16'],
+            'wa_alarm_tpl'       => ['nullable', 'array'],
+            'wa_alarm_tpl.*'     => ['nullable', 'string', 'max:128'],
         ]);
 
         Settings::put('whatsapp_enabled',   $request->boolean('whatsapp_enabled') ? 1 : 0);
@@ -200,6 +212,11 @@ class SettingsController extends Controller
         Settings::put('wa_template_locale', $data['wa_template_locale']);
         Settings::put('wa_verify_token',    $data['wa_verify_token'] ?? '');
         Settings::put('wa_webhook_url',     $data['wa_webhook_url'] ?? '');
+
+        // Per-alarm-code template names (keyed by alarm key, e.g. "intrusion").
+        foreach (($data['wa_alarm_tpl'] ?? []) as $key => $tpl) {
+            Settings::put('wa_alarm_tpl_'.preg_replace('/[^a-z_]/', '', (string) $key), trim((string) $tpl));
+        }
 
         if (filled($data['wa_token'] ?? null)) {
             Settings::put('wa_token', $data['wa_token']);

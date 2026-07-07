@@ -17,3 +17,11 @@ Schedule::command('salto:check')
     ->cron("*/{$pollMinutes} * * * *")
     ->withoutOverlapping()
     ->runInBackground();
+
+// Scan the SALTO audit trail for new alarm events (intrusion, tamper, forced
+// entry, duress, door-left-open, hardware failure). Runs every minute so
+// alarms are delivered promptly — it only reads new rows past the watermark.
+Schedule::command('salto:alarms')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
