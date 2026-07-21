@@ -13,19 +13,19 @@ Artisan::command('inspire', function () {
 // reboot or `php artisan schedule:run` picks up changes.
 $pollMinutes = max(1, min(59, (int) config('monitor.poll_minutes', 15)));
 
-// NB: withoutOverlapping() is given an explicit expiry (minutes) so a run that
-// is interrupted (e.g. the container is killed mid-run) cannot leave a stale
-// lock that blocks the task forever. runInBackground() is deliberately NOT used:
-// it defers lock release to a separate schedule:finish call which can be lost if
-// the process is killed, re-introducing the stuck-lock problem. These tasks are
-// lightweight (seconds), so running them inline is simpler and reliable.
+// NB: withoutOverlapping() is deliberately NOT used. It stores a lock in the
+// cache that must be released after each run; a run interrupted while
+// runInBackground() was previously in use left a stale lock that wedged the
+// scheduler permanently (filtersPass() kept returning false). These tasks are
+// lightweight (a few seconds) and run serially once per minute via
+// schedule:work, so overlap is a non-issue — and without a mutex there is no
+// lock that can get stuck. Both commands are also safe to run concurrently:
+// salto:alarms advances a watermark, salto:check upserts idempotently.
 Schedule::command('salto:check')
-    ->cron("*/{$pollMinutes} * * * *")
-    ->withoutOverlapping(10);
+    ->cron("*/{$pollMinutes} * * * *");
 
 // Scan the SALTO audit trail for new alarm events (intrusion, tamper, forced
 // entry, duress, door-left-open, hardware failure). Runs every minute so
 // alarms are delivered promptly — it only reads new rows past the watermark.
 Schedule::command('salto:alarms')
-    ->everyMinute()
-    ->withoutOverlapping(5);
+    ->everyMinute();
